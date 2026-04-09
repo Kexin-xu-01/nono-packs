@@ -16,7 +16,7 @@ jobs:
         with:
           publish: "true"
           package-name: claude
-          package-namespace: lukehinds
+          package-namespace: always-further
           package-version: ${{ github.ref_name }}
           package-path: claude
           registry-url: https://packs.nono.sh/api/v1
