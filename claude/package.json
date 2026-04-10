@@ -8,6 +8,11 @@
   "min_nono_version": "0.29.0",
   "artifacts": [
     {
+      "type": "policy",
+      "path": "policy.json",
+      "install_as": "claude-code"
+    },
+    {
       "type": "plugin",
       "path": ".claude-plugin/plugin.json"
     },
