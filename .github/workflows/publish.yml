@@ -19,7 +19,7 @@ jobs:
           package-namespace: always-further
           package-version: ${{ github.ref_name }}
           package-path: claude
-          registry-url: https://packs.nono.sh/api/v1
+          registry-url: https://registry.nono.sh/api/v1
           files: |
             .claude-plugin/plugin.json
             skills/nono-sandbox/SKILL.md
