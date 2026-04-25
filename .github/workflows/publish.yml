@@ -23,7 +23,6 @@ jobs:
           files: |
             .claude-plugin/plugin.json
             skills/nono-sandbox/SKILL.md
-            hooks/hooks.json
             bin/nono-hook-bash.sh
             package.json
             policy.json
