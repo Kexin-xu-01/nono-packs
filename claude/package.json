@@ -10,26 +10,6 @@
       "type": "profile",
       "path": "policy.json",
       "install_as": "claude-code"
-    },
-    {
-      "type": "plugin",
-      "path": ".claude-plugin/plugin.json",
-      "install_dir": "~/.claude/plugins/nono/.claude-plugin"
-    },
-    {
-      "type": "plugin",
-      "path": "bin/nono-hook.sh",
-      "install_dir": "~/.claude/plugins/nono/bin"
-    },
-    {
-      "type": "plugin",
-      "path": "bin/nono-hook-bash.sh",
-      "install_dir": "~/.claude/plugins/nono/bin"
-    },
-    {
-      "type": "plugin",
-      "path": "skills/nono-sandbox/SKILL.md",
-      "install_dir": "~/.claude/plugins/nono/skills/nono-sandbox"
     }
   ]
 }
