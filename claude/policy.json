@@ -29,8 +29,10 @@
     "allow": [
       "$HOME/.claude",
       "$HOME/.cache/claude",
-      "$XDG_CONFIG_HOME/nono/profiles",
-      "$XDG_CONFIG_HOME/nono/packages/always-further/claude"
+      "$XDG_CONFIG_HOME/nono/profiles"
+    ],
+    "read": [
+      "$XDG_CONFIG_HOME/nono/packages"
     ],
     "allow_file": [
       "$HOME/.claude.json",
