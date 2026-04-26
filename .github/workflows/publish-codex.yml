@@ -4,6 +4,13 @@ on:
     tags: ["codex-v*"]
   workflow_dispatch:
 
+# Reusable workflows can only use permissions the caller grants.
+# Sigstore signing needs id-token: write — must be declared here, not
+# (just) inside _publish.yml.
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     uses: ./.github/workflows/_publish.yml
