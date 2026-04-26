@@ -1,0 +1,53 @@
+name: _publish
+# Reusable workflow shared by all per-pack triggers (publish-claude.yml,
+# publish-codex.yml, …). Keeps the publishing logic in one place.
+#
+# Each per-pack trigger invokes this workflow with the pack directory
+# name as `pack`. We derive the file list from the pack's package.json
+# `artifacts[]` so adding/removing an artifact is a one-place edit in
+# the manifest — no workflow churn per artifact change.
+on:
+  workflow_call:
+    inputs:
+      pack:
+        required: true
+        type: string
+        description: Pack directory name relative to repo root (e.g. claude, codex).
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Build files list from package.json
+        id: files
+        run: |
+          set -euo pipefail
+          # Always upload the manifest itself; conditionally include
+          # README.md if present. Everything else comes from
+          # artifacts[].path so the manifest is the source of truth.
+          {
+            echo "package.json"
+            [ -f "${{ inputs.pack }}/README.md" ] && echo "README.md"
+            jq -r '.artifacts[].path' "${{ inputs.pack }}/package.json"
+          } | sort -u > /tmp/files.txt
+          {
+            echo "files<<EOF"
+            cat /tmp/files.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: always-further/agent-sign@c9426f1a00f823dd53e7b9068d910a68b43e49e9 # v0.0.11
+        with:
+          publish: "true"
+          package-name: ${{ inputs.pack }}
+          package-namespace: always-further
+          package-version: ${{ github.ref_name }}
+          package-path: ${{ inputs.pack }}
+          registry-url: https://registry.nono.sh/api/v1
+          files: ${{ steps.files.outputs.files }}

@@ -1,0 +1,11 @@
+name: Publish codex pack
+on:
+  push:
+    tags: ["codex-v*"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ./.github/workflows/_publish.yml
+    with:
+      pack: codex
