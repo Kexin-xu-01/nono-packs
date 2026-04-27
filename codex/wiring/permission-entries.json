@@ -1,7 +1,0 @@
-[
-  {
-    "hooks": [
-      { "type": "command", "command": "$PACK_DIR/bin/nono-hook-permission.sh", "silent": true }
-    ]
-  }
-]

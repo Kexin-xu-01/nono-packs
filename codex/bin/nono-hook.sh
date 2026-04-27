@@ -1,15 +1,14 @@
 #!/bin/bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
-# Version: 1.1.0
+# Version: 2.0.0
 #
-# Splits user-visible from agent-visible content so the conversation
-# stays readable:
-#   `reason`            = ONE-LINE user-visible block reason.
-#   `additionalContext` = full diagnostic + Option A/B template, only
-#                         visible to the agent on follow-up turns.
-#
-# Earlier versions emitted the same wall-of-text in both fields and
-# duplicated the allow-list dump that SessionStart already provides.
+# Fires only on actual sandbox-denial signatures. Emits a single
+# short `reason` so the hook output stays compact in the TUI.
+# The model reads `reason` and synthesises the next-action steps
+# (allow flag vs profile fragment) for the user — the long
+# template that earlier versions emitted as `additionalContext`
+# blew up the screen on every denial without buying anything the
+# model couldn't write itself.
 #
 # Schema reference:
 #   https://github.com/openai/codex/blob/main/codex-rs/hooks/schema/generated/post-tool-use.command.output.schema.json
@@ -38,44 +37,10 @@ fi
 FAILED_PATH=$(echo "$TOOL_RESPONSE" | grep -oE '/[^[:space:]"'"'"']+' | head -n 1)
 DISPLAY_PATH="${FAILED_PATH:-<blocked-path>}"
 
-# Pack identity. Hardcoded — the pack ships with `install_as: codex`,
-# so suggesting `extends: "codex"` is correct for any user who
-# started from the pack profile directly. The template includes a
-# comment for users on a custom intermediate to update by hand.
-PACK_PROFILE="codex"
+REASON="[nono] $DISPLAY_PATH blocked by OS sandbox. Tell user: (A) re-run with 'nono run --allow $DISPLAY_PATH -- codex' for one-off, OR (B) save profile extending 'codex' under ~/.config/nono/profiles/<name>.json with filesystem.read=[\"$DISPLAY_PATH\"] then 'nono run --profile <name> -- codex'."
 
-REASON="[nono sandbox] $DISPLAY_PATH was blocked by the OS sandbox — not Codex, not TCC, not Unix permissions. See additional context for diagnosis and the two options."
-
-CONTEXT="Sandbox denial detail:
-
-Run for the precise rule that blocked it:
-  nono why --path $DISPLAY_PATH --op read
-
-Present the user with these two options (and nothing else):
-
-  Option A — quick fix (one-off): exit and restart with the path allowed:
-    nono run --allow $DISPLAY_PATH -- codex
-
-  Option B — persistent fix: save this profile to
-  ~/.config/nono/profiles/<chosen-name>.json then start with:
-    nono run --profile <chosen-name> -- codex
-
-  {
-    \"extends\": \"$PACK_PROFILE\",
-    \"meta\": { \"name\": \"<chosen-name>\", \"version\": \"1.0.0\" },
-    \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
-  }
-  // change \"$PACK_PROFILE\" to the user's active profile name if
-  //   they started from a custom one.
-  // use \"read\" for read-only, \"write\" for write-only, or
-  //   \"allow\" for r+w access."
-
-jq -n --arg reason "$REASON" --arg ctx "$CONTEXT" '{
+jq -n --arg reason "$REASON" '{
   "decision": "block",
   "reason": $reason,
-  "systemMessage": "nono sandbox denial",
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": $ctx
-  }
+  "systemMessage": "nono sandbox denial"
 }'
