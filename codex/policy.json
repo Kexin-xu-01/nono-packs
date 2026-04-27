@@ -25,10 +25,10 @@
     "allow": [
       "$HOME/.codex",
       "$HOME/.agents",
-      "$XDG_CONFIG_HOME/nono/profiles"
+      "$HOME/.config/nono/profiles"
     ],
     "read": [
-      "$XDG_CONFIG_HOME/nono/packages"
+      "$HOME/.config/nono/packages"
     ]
   },
   "network": { "block": false },

@@ -1,0 +1,7 @@
+[
+  {
+    "hooks": [
+      { "type": "command", "command": "$PACK_DIR/bin/nono-hook-session.sh" }
+    ]
+  }
+]

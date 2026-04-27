@@ -1,0 +1,6 @@
+[marketplaces.always-further]
+source_type = "local"
+source = "$HOME/.codex/plugins/marketplaces/always-further"
+
+[plugins."nono@always-further"]
+enabled = true

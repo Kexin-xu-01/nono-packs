@@ -1,0 +1,8 @@
+[
+  {
+    "matcher": "^(Bash|apply_patch|mcp__.*)$",
+    "hooks": [
+      { "type": "command", "command": "$PACK_DIR/bin/nono-hook.sh" }
+    ]
+  }
+]
