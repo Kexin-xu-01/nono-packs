@@ -9,11 +9,15 @@
     { "type": "profile", "path": "policy.json", "install_as": "codex" },
     { "type": "plugin", "path": ".codex-plugin/plugin.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
+    { "type": "plugin", "path": "bin/nono-hook-permission.sh" },
+    { "type": "plugin", "path": "bin/nono-hook-session.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
     { "type": "plugin", "path": "assets/nono-codex.png" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/codex-block.toml" },
-    { "type": "plugin", "path": "wiring/hooks-entries.json" }
+    { "type": "plugin", "path": "wiring/hooks-entries.json" },
+    { "type": "plugin", "path": "wiring/permission-entries.json" },
+    { "type": "plugin", "path": "wiring/session-entries.json" }
   ],
   "wiring": [
     {
@@ -42,6 +46,20 @@
       "file": "$HOME/.codex/hooks.json",
       "path": "hooks.PostToolUse",
       "patch_entries": "wiring/hooks-entries.json",
+      "key_field": "hooks.0.command"
+    },
+    {
+      "type": "json_array_append",
+      "file": "$HOME/.codex/hooks.json",
+      "path": "hooks.PermissionRequest",
+      "patch_entries": "wiring/permission-entries.json",
+      "key_field": "hooks.0.command"
+    },
+    {
+      "type": "json_array_append",
+      "file": "$HOME/.codex/hooks.json",
+      "path": "hooks.SessionStart",
+      "patch_entries": "wiring/session-entries.json",
       "key_field": "hooks.0.command"
     }
   ]
