@@ -1,13 +1,19 @@
 #!/bin/bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
-# Version: 1.2.0
+# Version: 1.3.0
 #
-# Behavioural change in 1.2.0: the additionalContext now instructs the
-# model to ACT on the user's choice (write the profile file directly
-# via its file-write tool when they pick Option B), rather than just
-# re-pasting the JSON template with `<chosen-name>` placeholders for
-# the user to fill in. Earlier versions left the model parroting the
-# template back, which was confusing UX.
+# Behavioural change in 1.3.0: the additionalContext no longer contains
+# any <placeholder> tokens. The hook derives a default profile name
+# from the blocked path basename (e.g. /home/u/test.txt → codex-test-txt)
+# and substitutes it into the JSON template before emitting. This is a
+# response to v1.2.0 behaviour where Codex's model echoed `<chosen-name>`
+# back to the user verbatim despite explicit instructions to substitute
+# a real name — placeholders are clearly mishandled by the model in
+# this position. The hook still asks the model to write the file via
+# its file-write tool, but if it falls back to printing the template,
+# the printout is now directly usable.
+#
+# 1.2.0 introduced the "act, don't parrot" framing (kept in 1.3.0).
 #
 # Splits user-visible from agent-visible content so the conversation
 # stays readable:
@@ -51,45 +57,59 @@ DISPLAY_PATH="${FAILED_PATH:-<blocked-path>}"
 # comment for users on a custom intermediate to update by hand.
 PACK_PROFILE="codex"
 
+# Derive a default profile name from the blocked path so the
+# additionalContext never contains a `<placeholder>` token — earlier
+# versions used `<chosen-name>` and Codex's model parroted it back to
+# the user verbatim. Pre-substituting a real name means the worst
+# case (model just echoes our template) still produces something the
+# user can copy-paste. Algorithm: lowercase, basename, kebab-case,
+# strip any chars outside [a-z0-9-]. Fallback to `${PACK_PROFILE}-extended`.
+PATH_BASENAME=$(basename "$DISPLAY_PATH" 2>/dev/null \
+  | tr '[:upper:]' '[:lower:]' \
+  | tr -c 'a-z0-9-' '-' \
+  | sed -E 's/-+/-/g; s/^-//; s/-$//')
+if [ -z "$PATH_BASENAME" ] || [ "$PATH_BASENAME" = "-" ]; then
+    DEFAULT_PROFILE_NAME="${PACK_PROFILE}-extended"
+else
+    DEFAULT_PROFILE_NAME="${PACK_PROFILE}-${PATH_BASENAME}"
+fi
+
 REASON="[nono sandbox] $DISPLAY_PATH was blocked by the OS sandbox — not Codex, not TCC, not Unix permissions. See additional context for diagnosis and the two options."
 
-CONTEXT="Sandbox denial detail. Path blocked: $DISPLAY_PATH
+CONTEXT="Sandbox denial. Path blocked: $DISPLAY_PATH
+Profile name to use for the persistent fix below: $DEFAULT_PROFILE_NAME
 
-Offer the user TWO choices (A or B). Wait for their answer before doing anything.
+Offer the user TWO choices (A or B). Wait for their answer.
 
-  Option A (one-off): they exit and restart with this path allowed:
-    nono run --allow $DISPLAY_PATH -- codex
+  A) one-off — exit and restart with this path allowed:
+       nono run --allow $DISPLAY_PATH -- codex
 
-  Option B (persistent): you create a profile file for them.
+  B) persistent — create a profile file using the name above
+     ($DEFAULT_PROFILE_NAME).
 
-If they pick A: print the command above and stop. They will exit and restart themselves.
+If user picks A: print that command. Stop.
 
-If they pick B: do the following yourself, do NOT just paste the JSON back:
-  1. Pick a short descriptive profile name based on what is being granted
-     (e.g. for a Documents path use 'codex-docs'; for a single file use
-     'codex-with-<basename>'). Use the active pack profile '$PACK_PROFILE'
-     as the base for the name. Avoid '<chosen-name>' literally — pick a real name.
-  2. Use your file-write tool to create the file at:
-       ~/.config/nono/profiles/<that-name>.json
-     with these exact contents (substitute the name you picked):
-       {
-         \"extends\": \"$PACK_PROFILE\",
-         \"meta\": { \"name\": \"<that-name>\", \"version\": \"1.0.0\" },
-         \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
-       }
-  3. Tell the user the file has been written and give them the command to
-     start the new session:
-       nono run --profile <that-name> -- codex
-  4. Stop. Do not retry the original tool call — they need to restart codex
-     for the new profile to take effect.
+If user picks B: write the file using your file-write tool to
+~/.config/nono/profiles/${DEFAULT_PROFILE_NAME}.json with EXACTLY
+these contents (the profile name is already filled in — do NOT
+substitute placeholders, just write what is below):
+{
+  \"extends\": \"$PACK_PROFILE\",
+  \"meta\": { \"name\": \"$DEFAULT_PROFILE_NAME\", \"version\": \"1.0.0\" },
+  \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
+}
 
-Notes for both options:
-  - Use 'read' if they only need to view; 'write' if only modify;
-    'allow' for read+write.
-  - If the user started from a custom profile (not '$PACK_PROFILE'
-    directly), substitute that name in 'extends' instead.
-  - For diagnosing the exact rule that blocked the path, the user can run:
-      nono why --path $DISPLAY_PATH --op read"
+After writing, tell the user:
+  Created. Restart codex with:
+    nono run --profile $DEFAULT_PROFILE_NAME -- codex
+
+Stop after either option. Do not retry the blocked tool call — the
+user has to restart for the new profile to take effect.
+
+Notes:
+  - Use 'read' for view-only; 'write' for modify-only; 'allow' for r+w.
+    Default is 'read' above.
+  - For the precise rule that blocked the path: nono why --path $DISPLAY_PATH --op read"
 
 jq -n --arg reason "$REASON" --arg ctx "$CONTEXT" '{
   "decision": "block",
