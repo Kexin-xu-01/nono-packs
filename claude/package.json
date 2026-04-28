@@ -6,7 +6,7 @@
   "platforms": ["macos", "linux"],
   "min_nono_version": "0.44.0",
   "artifacts": [
-    { "type": "profile", "path": "policy.json", "install_as": "claude-code" },
+    { "type": "profile", "path": "policy.json", "install_as": "claude", "aliases": ["claude-code"] },
     { "type": "plugin", "path": ".claude-plugin/plugin.json" },
     { "type": "plugin", "path": "hooks/hooks.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
