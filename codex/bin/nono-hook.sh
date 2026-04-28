@@ -1,6 +1,12 @@
 #!/bin/bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
-# Version: 1.3.0
+# Version: 1.4.0
+#
+# Behavioural change in 1.4.0: path extraction now also looks at
+# tool_input and accepts tilde-prefixed paths (`~/test.txt`), not
+# just absolute `/...` forms. Earlier versions silently fell back
+# to a `<blocked-path>` literal when the denial only mentioned the
+# tilde form, which then surfaced in user-facing output.
 #
 # Behavioural change in 1.3.0: the additionalContext no longer contains
 # any <placeholder> tokens. The hook derives a default profile name
@@ -48,7 +54,25 @@ if ! echo "$TOOL_RESPONSE" | grep -qiE 'operation not permitted|permission denie
     exit 0
 fi
 
-FAILED_PATH=$(echo "$TOOL_RESPONSE" | grep -oE '/[^[:space:]"'"'"']+' | head -n 1)
+# Path extraction. Try multiple sources in order of fidelity:
+#  1. tool_input — the original argument the model passed (e.g. the
+#     `path` field for Read, or extracted from `command` for Bash).
+#     This carries the user-typed form (`~/test.txt`, `./foo`).
+#  2. tool_response — the error string. Catches absolute paths the
+#     kernel/OpenSSL/etc surface in their messages.
+# Accept both `/` absolute and `~/` tilde-prefixed forms — earlier
+# versions only matched `/...` and fell back to a `<blocked-path>`
+# literal when the denial reported a tilde path.
+TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input | tostring' 2>/dev/null)
+PATH_REGEX='(~/|/)[^[:space:]"'"'"',]+'
+FAILED_PATH=$(echo "$TOOL_INPUT" | grep -oE "$PATH_REGEX" | head -n 1)
+[ -z "$FAILED_PATH" ] && FAILED_PATH=$(echo "$TOOL_RESPONSE" | grep -oE "$PATH_REGEX" | head -n 1)
+# Resolve tilde to $HOME so all downstream uses (the suggested
+# command, the `read:` array, the derived profile name) are unambiguous.
+case "$FAILED_PATH" in
+    "~/"*) FAILED_PATH="${HOME}/${FAILED_PATH#\~/}" ;;
+    "~")   FAILED_PATH="$HOME" ;;
+esac
 DISPLAY_PATH="${FAILED_PATH:-<blocked-path>}"
 
 # Pack identity. Hardcoded — the pack ships with `install_as: codex`,
