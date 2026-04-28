@@ -1,6 +1,13 @@
 #!/bin/bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
-# Version: 1.1.0
+# Version: 1.2.0
+#
+# Behavioural change in 1.2.0: the additionalContext now instructs the
+# model to ACT on the user's choice (write the profile file directly
+# via its file-write tool when they pick Option B), rather than just
+# re-pasting the JSON template with `<chosen-name>` placeholders for
+# the user to fill in. Earlier versions left the model parroting the
+# template back, which was confusing UX.
 #
 # Splits user-visible from agent-visible content so the conversation
 # stays readable:
@@ -46,29 +53,43 @@ PACK_PROFILE="codex"
 
 REASON="[nono sandbox] $DISPLAY_PATH was blocked by the OS sandbox — not Codex, not TCC, not Unix permissions. See additional context for diagnosis and the two options."
 
-CONTEXT="Sandbox denial detail:
+CONTEXT="Sandbox denial detail. Path blocked: $DISPLAY_PATH
 
-Run for the precise rule that blocked it:
-  nono why --path $DISPLAY_PATH --op read
+Offer the user TWO choices (A or B). Wait for their answer before doing anything.
 
-Present the user with these two options (and nothing else):
-
-  Option A — quick fix (one-off): exit and restart with the path allowed:
+  Option A (one-off): they exit and restart with this path allowed:
     nono run --allow $DISPLAY_PATH -- codex
 
-  Option B — persistent fix: save this profile to
-  ~/.config/nono/profiles/<chosen-name>.json then start with:
-    nono run --profile <chosen-name> -- codex
+  Option B (persistent): you create a profile file for them.
 
-  {
-    \"extends\": \"$PACK_PROFILE\",
-    \"meta\": { \"name\": \"<chosen-name>\", \"version\": \"1.0.0\" },
-    \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
-  }
-  // change \"$PACK_PROFILE\" to the user's active profile name if
-  //   they started from a custom one.
-  // use \"read\" for read-only, \"write\" for write-only, or
-  //   \"allow\" for r+w access."
+If they pick A: print the command above and stop. They will exit and restart themselves.
+
+If they pick B: do the following yourself, do NOT just paste the JSON back:
+  1. Pick a short descriptive profile name based on what is being granted
+     (e.g. for a Documents path use 'codex-docs'; for a single file use
+     'codex-with-<basename>'). Use the active pack profile '$PACK_PROFILE'
+     as the base for the name. Avoid '<chosen-name>' literally — pick a real name.
+  2. Use your file-write tool to create the file at:
+       ~/.config/nono/profiles/<that-name>.json
+     with these exact contents (substitute the name you picked):
+       {
+         \"extends\": \"$PACK_PROFILE\",
+         \"meta\": { \"name\": \"<that-name>\", \"version\": \"1.0.0\" },
+         \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
+       }
+  3. Tell the user the file has been written and give them the command to
+     start the new session:
+       nono run --profile <that-name> -- codex
+  4. Stop. Do not retry the original tool call — they need to restart codex
+     for the new profile to take effect.
+
+Notes for both options:
+  - Use 'read' if they only need to view; 'write' if only modify;
+    'allow' for read+write.
+  - If the user started from a custom profile (not '$PACK_PROFILE'
+    directly), substitute that name in 'extends' instead.
+  - For diagnosing the exact rule that blocked the path, the user can run:
+      nono why --path $DISPLAY_PATH --op read"
 
 jq -n --arg reason "$REASON" --arg ctx "$CONTEXT" '{
   "decision": "block",
