@@ -11,7 +11,7 @@
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "bin/nono-hook-session.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
-    { "type": "plugin", "path": "assets/nono-codex.png" },
+    { "type": "plugin", "path": "assets/logo.png" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/codex-block.toml" },
     { "type": "plugin", "path": "wiring/hooks-entries.json" },

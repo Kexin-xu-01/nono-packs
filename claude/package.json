@@ -12,7 +12,7 @@
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "bin/nono-hook-bash.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
-    { "type": "plugin", "path": "assets/nono-claude.png" },
+    { "type": "plugin", "path": "assets/logo.png" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/known-marketplaces.json" },
     { "type": "plugin", "path": "wiring/installed-plugin.json" },
