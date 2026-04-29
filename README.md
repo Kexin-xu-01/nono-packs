@@ -16,6 +16,7 @@ Each top-level directory is an individual pack. Packs are described by a `packag
 Current packs in this repository include:
 
 - [`claude`](./claude): Claude Code integration for working inside the `nono` sandbox
+- [`codex`](./codex): Codex integration for working inside the `nono` sandbox
 
 Typical pack contents:
 
