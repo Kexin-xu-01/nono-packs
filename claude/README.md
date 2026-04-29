@@ -2,7 +2,7 @@
   <img src="./assets/logo.png" alt="nono claude" width="500" />
 </p>
 
-# claude nono Pack
+# claude nono
 
 `claude` is a `nono` package / plugin for Claude Code.
 
