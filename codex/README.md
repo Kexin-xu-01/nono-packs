@@ -2,7 +2,7 @@
   <img src="./assets/logo.png" alt="nono codex" width="600" />
 </p>
 
-# nono pack: codex
+# nono codex
 
 Sandbox profile and Codex plugin for running [OpenAI Codex CLI](https://developers.openai.com/codex) inside a [nono](https://nono.sh) security sandbox.
 
