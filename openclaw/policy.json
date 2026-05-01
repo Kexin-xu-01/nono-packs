@@ -38,12 +38,5 @@
   "undo": {
     "exclude_patterns": ["node_modules", ".next"]
   },
-  "interactive": false,
-  "hooks": {
-    "claude-code": {
-      "event": "PostToolUseFailure",
-      "matcher": "Read|Write|Edit|Bash",
-      "script": "nono-hook.sh"
-    }
-  }
+  "interactive": false
 }

@@ -8,6 +8,7 @@
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "openclaw" },
     { "type": "plugin", "path": ".openclaw-plugin/plugin.json" },
+    { "type": "plugin", "path": "hooks/hooks.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
