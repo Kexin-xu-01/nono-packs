@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.claude.com/plugin-marketplace.json",
+  "name": "always-further",
+  "description": "nono-managed marketplace for always-further",
+  "owner": { "name": "always-further" },
+  "plugins": [
+    {
+      "name": "autoresearch-nono",
+      "description": "Teaches Claude Code how to run autoresearch autonomous ML loops inside a nono security sandbox with GPU access.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Always Further",
+        "url": "https://github.com/always-further"
+      },
+      "source": "./plugins/autoresearch-nono",
+      "category": "security",
+      "strict": false,
+      "homepage": "https://github.com/always-further/autoresearch-nono",
+      "repository": "https://github.com/always-further/nono-packs/tree/main/autoresearch-nono",
+      "license": "Apache-2.0",
+      "keywords": ["nono", "sandbox", "autoresearch", "gpu", "ml", "training"]
+    }
+  ]
+}
