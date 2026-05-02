@@ -1,4 +1,4 @@
-# autoresearch-nono
+# claude-autoresearch
 
 nono profile and Claude Code plugin for running [autoresearch](https://github.com/karpathy/autoresearch) autonomous ML loops inside a kernel-level security sandbox.
 
@@ -15,7 +15,7 @@ autoresearch gives Claude autonomous write access to a training codebase and spa
 ```bash
 # The claude pack provides the base profile this pack extends
 nono pull always-further/claude
-nono pull always-further/autoresearch-nono
+nono pull Kexin-xu-01/claude-autoresearch
 ```
 
 This installs the `claude-code-autoresearch` profile and wires the plugin into Claude Code.

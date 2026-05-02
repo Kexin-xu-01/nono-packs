@@ -1,7 +1,7 @@
-name: Publish autoresearch-nono pack
+name: Publish claude-autoresearch pack
 on:
   push:
-    tags: ["autoresearch-nono-v*"]
+    tags: ["claude-autoresearch-v*"]
   workflow_dispatch:
 
 # Inlined (rather than calling a reusable _publish.yml) so the OIDC
@@ -27,8 +27,8 @@ jobs:
           # `artifacts[].path` so the manifest is the source of truth.
           {
             echo "package.json"
-            [ -f "autoresearch-nono/README.md" ] && echo "README.md"
-            jq -r '.artifacts[].path' "autoresearch-nono/package.json"
+            [ -f "claude-autoresearch/README.md" ] && echo "README.md"
+            jq -r '.artifacts[].path' "claude-autoresearch/package.json"
           } | sort -u > /tmp/files.txt
           {
             echo "files<<EOF"
@@ -39,9 +39,9 @@ jobs:
       - uses: always-further/agent-sign@c9426f1a00f823dd53e7b9068d910a68b43e49e9 # v0.0.11
         with:
           publish: "true"
-          package-name: autoresearch-nono
-          package-namespace: always-further
+          package-name: claude-autoresearch
+          package-namespace: Kexin-xu-01
           package-version: ${{ github.ref_name }}
-          package-path: autoresearch-nono
+          package-path: claude-autoresearch
           registry-url: https://registry.nono.sh/api/v1
           files: ${{ steps.files.outputs.files }}
