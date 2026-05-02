@@ -10,9 +10,13 @@ It ships a nono profile covering all standard OpenClaw instance directories, a s
 
 The built-in `openclaw` profile only allows `~/.openclaw`. Running a second or third agent instance (`~/.openclaw-agent1`, `~/.openclaw-agent2`) would otherwise be blocked. This pack's profile covers all standard instance directories so any agent variant runs without filesystem errors out of the box.
 
-**Sandbox-aware diagnostics**
+**Sandbox-aware diagnostics for all model types**
 
-When a tool call hits a sandbox boundary, the installed hook detects the denial and injects the exact blocked path, the current capability set, and a ready-to-use profile template — so the agent presents the user with the two right options instead of guessing.
+When a tool call hits a sandbox boundary, the installed hooks detect the denial and inject the exact blocked path, the current capability set, and a ready-to-use profile template — so the agent presents the user with the two right options instead of guessing.
+
+Two hooks run in tandem to cover every session type:
+- **PostToolUseFailure** (`settings.json`): fires immediately after a tool fails in Claude/pi-embedded sessions — injects context before the agent responds
+- **message_sending** (`nono-hooks/index.js`): fires on outgoing messages in native gateway sessions (Gemini, etc.) — appends context when the agent reports a denial
 
 **Multi-agent coordination**
 
@@ -45,8 +49,11 @@ nono run --profile openclaw --home ~/.openclaw-agent1 -- openclaw
 | Artifact | Type | Purpose |
 |---|---|---|
 | `policy.json` | `profile` | nono sandbox profile covering all standard OpenClaw directories and coordination bus |
-| `skills/nono-sandbox/SKILL.md` | `plugin` | Teaches the agent its constraints and how to diagnose permission failures |
-| `bin/nono-hook.sh` | `plugin` | Injects capability context and remediation options on permission denial |
+| `skills/nono-sandbox/SKILL.md` | `plugin` | Teaches the agent its constraints and how to diagnose permission failures (all sessions) |
+| `settings.json` | `plugin` | Pi-embedded settings that wire the PostToolUseFailure hook for Claude/Anthropic sessions |
+| `bin/nono-hook.sh` | `plugin` | Shell hook: injects capability context and remediation options on permission denial |
+| `nono-hooks/openclaw.plugin.json` | `plugin` | Native plugin manifest for the nono-hooks plugin |
+| `nono-hooks/index.js` | `plugin` | Native message_sending hook: fires for Gemini and all non-Claude model sessions |
 
 ## Policy Details
 
@@ -75,9 +82,13 @@ openclaw/
 │   └── plugin.json
 ├── bin/
 │   └── nono-hook.sh
+├── nono-hooks/
+│   ├── index.js
+│   └── openclaw.plugin.json
 ├── package.json
 ├── policy.json
 ├── README.md
+├── settings.json
 ├── skills/
 │   └── nono-sandbox/
 │       └── SKILL.md

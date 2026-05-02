@@ -19,6 +19,22 @@
       "repository": "https://github.com/always-further/nono-packs/tree/main/openclaw",
       "license": "Apache-2.0",
       "keywords": ["nono", "sandbox", "security", "capabilities", "openclaw"]
+    },
+    {
+      "name": "nono-hooks",
+      "description": "Native message_sending hook that fires nono sandbox diagnostics for non-Claude model sessions (Gemini, etc.). Works alongside the nono plugin.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Always Further",
+        "url": "https://github.com/always-further"
+      },
+      "source": "./plugins/nono-hooks",
+      "category": "security",
+      "strict": false,
+      "homepage": "https://nono.sh",
+      "repository": "https://github.com/always-further/nono-packs/tree/main/openclaw",
+      "license": "Apache-2.0",
+      "keywords": ["nono", "sandbox", "security", "capabilities", "openclaw"]
     }
   ]
 }

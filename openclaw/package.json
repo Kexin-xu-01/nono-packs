@@ -8,9 +8,11 @@
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "openclaw" },
     { "type": "plugin", "path": ".openclaw-plugin/plugin.json" },
-    { "type": "plugin", "path": "hooks/hooks.json" },
+    { "type": "plugin", "path": "settings.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
+    { "type": "plugin", "path": "nono-hooks/openclaw.plugin.json" },
+    { "type": "plugin", "path": "nono-hooks/index.js" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/known-marketplaces.json" },
     { "type": "plugin", "path": "wiring/installed-plugin.json" },
@@ -21,6 +23,16 @@
       "type": "symlink",
       "link": "$HOME/.openclaw/plugins/marketplaces/$NS/plugins/nono",
       "target": "$PACK_DIR"
+    },
+    {
+      "type": "symlink",
+      "link": "$HOME/.openclaw/plugins/marketplaces/$NS/plugins/nono-hooks",
+      "target": "$PACK_DIR/nono-hooks"
+    },
+    {
+      "type": "symlink",
+      "link": "$HOME/.openclaw/plugins/cache/$NS/nono-hooks/1.0.0",
+      "target": "$PACK_DIR/nono-hooks"
     },
     {
       "type": "write_file",

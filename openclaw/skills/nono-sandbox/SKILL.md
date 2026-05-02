@@ -3,6 +3,11 @@ name: nono-sandbox
 description: Diagnose and resolve permission denials when OpenClaw runs inside a nono security sandbox. Use this when a tool call, shell command, or file operation fails with "Operation not permitted", "Permission denied", EACCES, or EPERM — the cause is almost certainly the outer nono sandbox.
 ---
 
+**On any EPERM / EACCES / "Operation not permitted" tool or shell failure:** run `nono why --path <blocked-path> --op read` immediately and include its output verbatim in your reply. Do NOT suggest sudo, chmod, or system permission changes. Then offer the user exactly these two options:
+
+- **Option A (quick fix):** `nono run --allow /path/to/needed -- openclaw`
+- **Option B (persistent fix):** write a profile to `~/.config/nono/profiles/<name>.json` extending `openclaw`, add the path under `"allow"` or `"read"`, then start with `nono run --profile <name> -- openclaw`
+
 # Working inside a nono sandbox
 
 The user has launched you with `nono run --profile <name> -- openclaw`. nono enforces filesystem and network limits at the OS level (Landlock on Linux, Seatbelt on macOS). These are kernel-enforced boundaries — approvals or retries inside OpenClaw cannot grant access that nono hasn't already permitted.
