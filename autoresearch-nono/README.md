@@ -13,6 +13,8 @@ autoresearch gives Claude autonomous write access to a training codebase and spa
 ## Install
 
 ```bash
+# The claude pack provides the base profile this pack extends
+nono pull always-further/claude
 nono pull always-further/autoresearch-nono
 ```
 
