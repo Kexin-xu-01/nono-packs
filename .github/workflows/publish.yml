@@ -17,4 +17,4 @@ jobs:
           package-name: claude-autoresearch
           package-namespace: Kexin-xu-01
           package-version: ${{ github.ref_name }}
-          package-path: nono-packs/claude-autoresearch
+          package-path: claude-autoresearch
