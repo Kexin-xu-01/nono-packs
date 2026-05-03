@@ -15,7 +15,7 @@ fi
 INPUT=$(cat)
 
 # Gate: only fire on actual sandbox denial signatures.
-if ! echo "$INPUT" | grep -qiE 'operation not permitted|permission denied|EPERM|EACCES|sandbox.*denied|landlock'; then
+if ! printf "%s\n" "$INPUT" | grep -qiE 'operation not permitted|permission denied|EPERM|EACCES|sandbox.*denied|landlock'; then
     exit 0
 fi
 

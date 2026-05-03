@@ -13,9 +13,9 @@ if ! command -v jq &> /dev/null; then
 fi
 
 INPUT=$(cat)
-OUTPUT=$(echo "$INPUT" | jq -r '.tool_result // ""' 2>/dev/null)
+OUTPUT=$(printf "%s\n" "$INPUT" | jq -r '.tool_result // ""' 2>/dev/null)
 
-if ! echo "$OUTPUT" | grep -qiE 'operation not permitted|permission denied|EPERM|EACCES|sandbox.*denied|landlock'; then
+if ! printf "%s\n" "$OUTPUT" | grep -qiE 'operation not permitted|permission denied|EPERM|EACCES|sandbox.*denied|landlock'; then
     exit 0
 fi
 
