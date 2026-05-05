@@ -6,13 +6,15 @@
     "description": "OpenClaw AI agent — supports main and multi-agent instances with shared coordination bus",
     "author": "always-further"
   },
-  "security": {
-    "groups": [
+  "groups": {
+    "include": [
       "node_runtime",
       "linux_runtime_state",
       "linux_sysfs_read",
       "git_config"
-    ],
+    ]
+  },
+  "security": {
     "signal_mode": "isolated",
     "ipc_mode": "shared_memory_only"
   },
