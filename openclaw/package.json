@@ -4,7 +4,7 @@
   "description": "OpenClaw plugin and matching nono profile. Provides sandbox-aware diagnostics on permission failures and ships the openclaw profile via the registry.",
   "license": "Apache-2.0",
   "platforms": ["macos", "linux"],
-  "min_nono_version": "0.44.0",
+  "min_nono_version": "0.47.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "openclaw" },
     { "type": "plugin", "path": ".openclaw-plugin/plugin.json" },
