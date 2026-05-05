@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "nono@always-further": true,
+    "nono-hooks@always-further": true
+  }
+}
