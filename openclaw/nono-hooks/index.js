@@ -22,7 +22,13 @@ module.exports = function register(api) {
     const capFile = process.env.NONO_CAP_FILE;
     if (!capFile) return;
 
-    const text = typeof event.content === 'string' ? event.content : '';
+    const content = event.content;
+    let text = '';
+    if (typeof content === 'string') {
+      text = content;
+    } else if (Array.isArray(content)) {
+      text = content.map(p => (p && typeof p.text === 'string' ? p.text : '')).join(' ');
+    }
     if (!DENIAL_PATTERN.test(text)) return;
 
     let caps;
@@ -56,6 +62,17 @@ module.exports = function register(api) {
       '                          then start with: nono run --profile <name> -- openclaw',
     ].join('\n');
 
-    return { content: event.content + context };
+    if (typeof content === 'string') {
+      return { content: content + context };
+    }
+    // For array content, append context to the last text part
+    const parts = content.slice();
+    const lastTextIdx = parts.map(p => typeof p.text === 'string').lastIndexOf(true);
+    if (lastTextIdx >= 0) {
+      parts[lastTextIdx] = { ...parts[lastTextIdx], text: parts[lastTextIdx].text + context };
+    } else {
+      parts.push({ type: 'text', text: context });
+    }
+    return { content: parts };
   });
 };
