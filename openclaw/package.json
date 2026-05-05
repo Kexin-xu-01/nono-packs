@@ -15,8 +15,7 @@
     { "type": "plugin", "path": "nono-hooks/index.js" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/known-marketplaces.json" },
-    { "type": "plugin", "path": "wiring/installed-plugin.json" },
-    { "type": "plugin", "path": "wiring/enabled-plugin.json" }
+    { "type": "plugin", "path": "wiring/installed-plugin.json" }
   ],
   "wiring": [
     {
@@ -53,11 +52,6 @@
       "type": "json_merge",
       "file": "$HOME/.openclaw/plugins/installed_plugins.json",
       "patch": "wiring/installed-plugin.json"
-    },
-    {
-      "type": "json_merge",
-      "file": "$HOME/.openclaw/openclaw.json",
-      "patch": "wiring/enabled-plugin.json"
     }
   ]
 }
