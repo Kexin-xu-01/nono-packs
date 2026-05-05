@@ -1,0 +1,32 @@
+# Optional Hermes hardening snippet for sessions launched under nono.
+# Merge by hand with ~/.hermes/config.yaml; nono intentionally does not
+# auto-merge YAML user config.
+
+plugins:
+  enabled:
+    - nono-sandbox
+
+approvals:
+  mode: manual
+  timeout: 60
+
+security:
+  tirith_enabled: true
+  tirith_fail_open: false
+  allow_private_urls: false
+  website_blocklist:
+    enabled: true
+    domains:
+      - "*.internal"
+      - "*.local"
+      - "metadata.google.internal"
+      - "metadata.goog"
+
+terminal:
+  env_passthrough: []
+  credential_files: []
+
+quick_commands:
+  nono-status:
+    type: exec
+    command: ~/.config/nono/packages/always-further/hermes/bin/nono-hermes-status.sh

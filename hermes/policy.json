@@ -1,0 +1,52 @@
+{
+  "extends": "default",
+  "meta": {
+    "name": "hermes",
+    "version": "1.0.0",
+    "description": "Hermes Agent CLI profile (registry-managed)",
+    "author": "always-further"
+  },
+  "security": {
+    "groups": [
+      "python_runtime",
+      "node_runtime",
+      "rust_runtime",
+      "user_caches_macos",
+      "user_caches_linux",
+      "linux_sysfs_read",
+      "nix_runtime",
+      "git_config",
+      "unlink_protection"
+    ],
+    "signal_mode": "isolated",
+    "capability_elevation": false
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/.hermes",
+      "$HOME/.config/nono/profiles"
+    ],
+    "read": [
+      "$HOME/.local/bin",
+      "$HOME/.local/share/uv",
+      "$HOME/.config/nono/packages"
+    ]
+  },
+  "network": { "block": false },
+  "workdir": { "access": "readwrite" },
+  "open_urls": {
+    "allow_localhost": true
+  },
+  "allow_launch_services": true,
+  "undo": {
+    "exclude_patterns": [
+      "node_modules",
+      ".next",
+      "__pycache__",
+      "target",
+      ".hermes"
+    ],
+    "exclude_globs": ["*.tmp.[0-9]*.[0-9]*"]
+  },
+  "interactive": true
+}
