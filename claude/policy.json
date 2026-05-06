@@ -6,8 +6,8 @@
     "description": "Anthropic Claude Code CLI agent (registry-managed)",
     "author": "always-further"
   },
-  "security": {
-    "groups": [
+  "groups": {
+    "include": [
       "claude_code_macos",
       "claude_code_linux",
       "user_caches_macos",
@@ -21,7 +21,9 @@
       "nix_runtime",
       "git_config",
       "unlink_protection"
-    ],
+    ]
+  },
+  "security": {
     "signal_mode": "isolated",
     "capability_elevation": false
   },
@@ -30,7 +32,8 @@
       "$HOME/.claude",
       "$HOME/.cache/claude",
       "$HOME/.config/nono/profiles",
-      "/tmp/claude-$UID"
+      "/tmp/claude-$UID",
+      "$HOME/Library/Keychains"
     ],
     "read": [
       "$HOME/.config/nono/packages"
@@ -39,11 +42,8 @@
       "$HOME/.claude.json",
       "$HOME/.claude.json.lock",
       "$HOME/.claude.lock"
-    ]
-  },
-  "policy": {
-    "add_allow_readwrite": ["$HOME/Library/Keychains"],
-    "override_deny": ["$HOME/Library/Keychains"]
+    ],
+    "bypass_protection": ["$HOME/Library/Keychains"]
   },
   "network": { "block": false },
   "workdir": { "access": "readwrite" },
