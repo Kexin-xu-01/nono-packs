@@ -32,7 +32,7 @@
       "$HOME/.claude",
       "$HOME/.cache/claude",
       "$HOME/.config/nono/profile-drafts",
-      "/tmp/claude-$UID"
+      "/tmp/claude-$UID",
       "$HOME/Library/Keychains"
     ],
     "read": [
