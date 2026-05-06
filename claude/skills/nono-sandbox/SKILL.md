@@ -55,6 +55,8 @@ After diagnosing with `nono why`, present the user with options:
 
    If the user agrees, run `nono profile guide` to get the full profile schema, then write the full profile JSON to `~/.config/nono/profile-drafts/<name>.json`.
 
+   If `~/.config/nono/profile-drafts` does not exist or cannot be written, or `nono profile promote --help` is unavailable, do not try to modify profiles directly. Tell the user to upgrade nono, then rerun the draft flow.
+
    If a user profile of that name already exists in `~/.config/nono/profiles/<name>.json`, read it first, compute the SHA-256 of the exact bytes you read, base your edit on it, then write that hash to `~/.config/nono/profile-drafts/<name>.base`.
 
    If there is no user profile yet and the current profile is pack-provided or built-in, do not draft a replacement with the same name. Draft a derived profile such as `<active>-local` with `"extends": "<active>"` and add only the extra access there.
