@@ -15,9 +15,15 @@
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/codex-block.toml" },
     { "type": "plugin", "path": "wiring/hooks-entries.json" },
-    { "type": "plugin", "path": "wiring/session-entries.json" }
+    { "type": "plugin", "path": "wiring/session-entries.json" },
+    { "type": "plugin", "path": "wiring/profile-drafts-dir-marker" }
   ],
   "wiring": [
+    {
+      "type": "write_file",
+      "source": "wiring/profile-drafts-dir-marker",
+      "dest": "$HOME/.config/nono/profile-drafts/.nono-codex-pack-marker"
+    },
     {
       "type": "symlink",
       "link": "$HOME/.codex/plugins/marketplaces/$NS/plugins/nono",
