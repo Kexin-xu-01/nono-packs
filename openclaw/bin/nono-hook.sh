@@ -1,9 +1,12 @@
 #!/bin/bash
 # nono-hook.sh - OpenClaw hook for nono sandbox diagnostics
-# Version: 1.1.0
+# Version: 1.2.0
 #
 # Fires on PostToolUseFailure for Read|Write|Edit|Bash. Only injects
 # sandbox context when the failure looks like an actual sandbox denial.
+#
+# 1.2.0: Option B now points at ~/.config/nono/profile-drafts/ + promote
+# CLI, since profiles/ is no longer writable from inside the sandbox.
 
 if [ -z "$NONO_CAP_FILE" ] || [ ! -f "$NONO_CAP_FILE" ]; then
     exit 0
@@ -38,8 +41,8 @@ DO NOT suggest sudo, chmod, or system permission changes. Take these steps in or
    Option A (quick fix): exit and restart with the path allowed:
      nono run --allow /path/to/needed -- openclaw
 
-   Option B (persistent fix): write a nono profile. Run \`nono profile guide\` for the schema, then save a profile JSON at ~/.config/nono/profiles/<name>.json. Start sessions with:
-     nono run --profile <name> -- openclaw
+   Option B (persistent fix): draft a nono profile. The profiles/ directory is read-only from inside the sandbox; drafts go to profile-drafts/. Run \`nono profile guide\` for the schema. If updating an existing user profile, read ~/.config/nono/profiles/<name>.json, compute the SHA-256 of those exact bytes, write the full proposed profile to ~/.config/nono/profile-drafts/<name>.json, and write the hash to ~/.config/nono/profile-drafts/<name>.base. If the current profile is pack-provided or built-in, draft <active>-local extending <active> instead of replacing it. Tell the user:
+     Drafted <name>. Run \`nono profile promote <name>\` to review and apply, then start sessions with \`nono run --profile <name> -- openclaw\`.
 
 Step 1 is non-optional and must run before you reply."
 

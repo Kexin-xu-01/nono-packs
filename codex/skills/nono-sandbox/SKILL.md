@@ -42,9 +42,11 @@ Exit Codex and restart with the path explicitly allowed:
 
 Use this for paths the user only needs occasionally.
 
-### Option B — persistent fix (write a profile)
+### Option B — persistent fix (draft a profile)
 
-Save a JSON file at `~/.config/nono/profiles/<chosen-name>.json` extending the active profile and adding the path. Minimal example for read-only access:
+The active profile directory `~/.config/nono/profiles/` is read-only from inside the sandbox by design. Drafts are written to `~/.config/nono/profile-drafts/` and the user promotes them out-of-band with `nono profile promote`.
+
+Write the JSON to `~/.config/nono/profile-drafts/<chosen-name>.json` extending the active profile. Minimal example for read-only access:
 
     {
       "extends": "codex",
@@ -54,6 +56,10 @@ Save a JSON file at `~/.config/nono/profiles/<chosen-name>.json` extending the a
 
 If the user is on a custom intermediate profile (e.g. `--profile codex-with-docs` extending `codex`), change `extends` to that profile's name so the new profile inherits all their customisations.
 
+If a user profile of that name already exists, read `~/.config/nono/profiles/<chosen-name>.json` first, compute the SHA-256 of the exact bytes you read, base your edit on that profile, write the full proposed profile to `~/.config/nono/profile-drafts/<chosen-name>.json`, and write the hash to `~/.config/nono/profile-drafts/<chosen-name>.base`.
+
+If there is no user profile yet and the active profile is pack-provided or built-in, do not draft a replacement with the same name. Draft a derived profile such as `<active>-local` with `"extends": "<active>"` and add only the extra access there.
+
 Filesystem field choices:
 - `"read"` — read-only directory or file access
 - `"write"` — write-only access (rare)
@@ -61,15 +67,15 @@ Filesystem field choices:
 
 For a single file rather than a directory, use `"allow_file"` / `"read_file"` / `"write_file"` instead.
 
-After saving, the user starts sessions with:
+After drafting, tell the user:
 
-    nono run --profile <chosen-name> -- codex
+    Drafted profile <chosen-name>. Run `nono profile promote <chosen-name>` to review and apply, then start sessions with `nono run --profile <chosen-name> -- codex`.
 
 ## Validating the new profile
 
-If the user wants to verify the JSON before using it:
+`nono profile promote` shows a diff and validates before applying. If the user wants to validate the draft directly:
 
-    nono profile validate <chosen-name>
+    nono profile validate --draft <chosen-name>
 
 ## What you should NOT do
 
