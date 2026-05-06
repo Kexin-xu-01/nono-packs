@@ -1,7 +1,7 @@
 name: test claude pack
 on:
   push:
-    tags: ["claude-v*"]
+    tags: ["test*"]
   workflow_dispatch:
 
 # Inlined (rather than calling a reusable _publish.yml) so the OIDC
