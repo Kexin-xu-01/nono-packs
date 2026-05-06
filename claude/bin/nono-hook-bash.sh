@@ -1,9 +1,12 @@
 #!/bin/bash
 # nono-hook-bash.sh - PostToolUse hook for Bash commands
-# Version: 1.0.0
+# Version: 1.1.0
 #
 # Inspects a Bash tool result for sandbox-denial patterns and injects
 # context so Claude can guide the user.
+#
+# 1.1.0: Option B now points at ~/.config/nono/profile-drafts/ + promote
+# CLI, since profiles/ is no longer writable from inside the sandbox.
 
 if [ -z "$NONO_CAP_FILE" ] || [ ! -f "$NONO_CAP_FILE" ]; then
     exit 0
@@ -38,8 +41,8 @@ DO NOT ask the user for permission. Take these steps in order, every time:
    Option A (quick fix): exit and restart with the path allowed:
      nono run --allow /path/to/needed -- claude
 
-   Option B (persistent fix): write a nono profile. Run \`nono profile guide\` for the schema (also without asking), then save a profile JSON at ~/.config/nono/profiles/<name>.json. Start sessions with:
-     nono run --profile <name> -- claude
+   Option B (persistent fix): draft a nono profile. The profiles/ directory is read-only from inside the sandbox; drafts go to profile-drafts/. Run \`nono profile guide\` for the schema (also without asking). If updating an existing user profile, read ~/.config/nono/profiles/<name>.json, compute the SHA-256 of those exact bytes, write the full proposed profile to ~/.config/nono/profile-drafts/<name>.json, and write the hash to ~/.config/nono/profile-drafts/<name>.base. If the current profile is pack-provided or built-in, draft <active>-local extending <active> instead of replacing it. Tell the user:
+     Drafted <name>. Run \`nono profile promote <name>\` to review and apply, then start sessions with \`nono run --profile <name> -- claude\`.
 
 Step 1 is non-optional and must run before you reply. Do not ask whether to run it."
 

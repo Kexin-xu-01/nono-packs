@@ -63,8 +63,8 @@ nono run --profile openclaw --home ~/.openclaw-agent1 -- openclaw
 
 The profile:
 - Extends `default` (inherits all standard security groups)
-- Allows `~/.openclaw`, `~/.openclaw-agent1/2/3`, `~/.config/openclaw`, `~/.config/nono/profiles`, `~/.openclaw.json`
-- Reads `~/.config/nono/packages`
+- Allows `~/.openclaw`, `~/.openclaw-agent1/2/3`, `~/.config/openclaw`, `~/.config/nono/profile-drafts`, `~/.openclaw.json`
+- Reads `~/.config/nono/packages`, `~/.config/nono/profiles`
 - Allows `$TMPDIR/openclaw-$UID` as the coordination bus
 - Adds `node_runtime`, `linux_runtime_state`, `linux_sysfs_read`, `git_config` security groups
 - Sets `signal_mode: isolated` and `ipc_mode: shared_memory_only`

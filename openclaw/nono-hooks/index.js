@@ -58,8 +58,14 @@ module.exports = function register(api) {
       '   Include its output verbatim in your reply.',
       '2. Present the user with exactly these two options:',
       '   Option A (quick fix):  nono run --allow /path/to/needed -- openclaw',
-      '   Option B (persistent): write a profile to ~/.config/nono/profiles/<name>.json,',
-      '                          then start with: nono run --profile <name> -- openclaw',
+      '   Option B (persistent): draft a profile to ~/.config/nono/profile-drafts/<name>.json',
+      '                          (profiles/ is read-only from the sandbox by design),',
+      '                          and if updating an existing user profile, write',
+      '                          ~/.config/nono/profile-drafts/<name>.base with the',
+      '                          SHA-256 of the original profile bytes.',
+      '                          then tell the user: run `nono profile promote <name>`',
+      '                          to review and apply, then start with',
+      '                          `nono run --profile <name> -- openclaw`',
     ].join('\n');
 
     if (typeof content === 'string') {
