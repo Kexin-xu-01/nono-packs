@@ -1,4 +1,4 @@
-name: Publish claude pack
+name: test claude pack
 on:
   push:
     tags: ["claude-v*"]
