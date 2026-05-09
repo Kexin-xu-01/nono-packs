@@ -15,13 +15,26 @@
     { "type": "plugin", "path": "skills/copilot-sandbox/SKILL.md" },
     { "type": "plugin", "path": "bin/denial.txt" },
     { "type": "plugin", "path": "bin/session.txt" },
-    { "type": "plugin", "path": "wiring/marketplace.json" }
+    { "type": "plugin", "path": "wiring/marketplace.json" },
+    { "type": "plugin", "path": "wiring/enabled-plugin.json" }
   ],
   "wiring": [
     {
       "type": "symlink",
       "link": "$HOME/.copilot/installed-plugins/$NS/nono",
       "target": "$PACK_DIR"
+    },
+    {
+      "type": "json_merge",
+      "file": "$HOME/.copilot/settings.json",
+      "patch": "wiring/marketplace.json"
+    },
+    {
+      "type": "json_array_append",
+      "file": "$HOME/.copilot/config.json",
+      "path": "extraKnownMarketplaces",
+      "patch_entries": "wiring/enabled-plugin.json"
     }
+
   ]
 }

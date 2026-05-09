@@ -27,16 +27,5 @@
       "$HOME/.config/gh",
       "/usr/local/etc/gitconfig"
     ]
-  },
-  "network": {
-    "credentials": ["copilot_cli"],
-    "custom_credentials": {
-      "copilot_cli": {
-        "upstream": "https://github.com",
-        "credential_key": "copilot_github_token",
-        "inject_header": "Authorization",
-        "credential_format": "Bearer {}"
-      }
-    }
   }
 }
