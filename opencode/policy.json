@@ -1,0 +1,52 @@
+{
+  "extends": "default",
+  "meta": {
+    "name": "opencode",
+    "version": "1.0.0",
+    "description": "opencode AI coding assistant (registry-managed)",
+    "author": "always-further"
+  },
+  "groups": {
+    "include": [
+      "user_caches_macos",
+      "user_caches_linux",
+      "node_runtime",
+      "opencode_linux",
+      "linux_sysfs_read",
+      "git_config",
+      "unlink_protection"
+    ]
+  },
+  "security": {
+    "signal_mode": "isolated"
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/.opencode",
+      "$HOME/.config/opencode",
+      "$HOME/.cache/opencode",
+      "$HOME/.local/share/opencode",
+      "$HOME/.local/share/opentui",
+      "$HOME/.local/state/opencode",
+      "$HOME/.config/nono/profile-drafts",
+      "$TMPDIR"
+    ],
+    "read": [
+      "$HOME/.config/nono/packages",
+      "$HOME/.config/nono/profiles"
+    ]
+  },
+  "network": {
+    "block": false
+  },
+  "workdir": {
+    "access": "readwrite"
+  },
+  "undo": {
+    "exclude_patterns": [
+      "node_modules",
+      ".next"
+    ]
+  },
+  "interactive": true
+}

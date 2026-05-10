@@ -35,6 +35,26 @@ else
 fi
 
 echo
+echo "nono proxy and TLS trust:"
+for name in HTTP_PROXY HTTPS_PROXY http_proxy https_proxy NO_PROXY no_proxy OPENAI_BASE_URL ANTHROPIC_BASE_URL GEMINI_BASE_URL SSL_CERT_FILE REQUESTS_CA_BUNDLE NODE_EXTRA_CA_CERTS CURL_CA_BUNDLE GIT_SSL_CAINFO NONO_PROXY_TOKEN; do
+  value=$(printenv "$name" 2>/dev/null || true)
+  if [ -n "$value" ]; then
+    case "$name" in
+      NONO_PROXY_TOKEN)
+        echo "  $name: set"
+        ;;
+      HTTP_PROXY|HTTPS_PROXY|http_proxy|https_proxy)
+        redacted=$(printf "%s" "$value" | sed -E 's#//[^/@]+@#//<redacted>@#')
+        echo "  $name: $redacted"
+        ;;
+      *)
+        echo "  $name: $value"
+        ;;
+    esac
+  fi
+done
+
+echo
 echo "Hermes security files:"
 for path in "$HOME/.hermes/.env" "$HOME/.hermes/config.yaml"; do
   if [ -e "$path" ]; then

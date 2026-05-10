@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +16,26 @@ DENIAL_RE = re.compile(
     re.IGNORECASE,
 )
 PATH_RE = re.compile(r"(?:~/|/)[^\s\"'`,;:]+")
+AUDIT_LOG = Path.home() / ".hermes" / "logs" / "nono-sandbox-audit.ndjson"
 _ANNOUNCED: set[str] = set()
+_PENDING_DENIAL_CONTEXT: dict[str, str] = {}
+PROXY_ENV_NAMES = (
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "NO_PROXY",
+    "no_proxy",
+    "OPENAI_BASE_URL",
+    "ANTHROPIC_BASE_URL",
+    "GEMINI_BASE_URL",
+    "SSL_CERT_FILE",
+    "REQUESTS_CA_BUNDLE",
+    "NODE_EXTRA_CA_CERTS",
+    "CURL_CA_BUNDLE",
+    "GIT_SSL_CAINFO",
+    "NONO_PROXY_TOKEN",
+)
 
 
 def _session_key(args: tuple[Any, ...], kwargs: dict[str, Any]) -> str:
@@ -38,6 +59,23 @@ def _cap_file() -> Path | None:
 
 def _inside_nono() -> bool:
     return _cap_file() is not None
+
+
+def _redact_env_value(name: str, value: str) -> str:
+    if name == "NONO_PROXY_TOKEN":
+        return "set"
+    if name in {"HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"}:
+        return re.sub(r"//[^/@]+@", "//<redacted>@", value)
+    return value
+
+
+def _proxy_status() -> dict[str, str]:
+    status = {}
+    for name in PROXY_ENV_NAMES:
+        value = os.environ.get(name)
+        if value:
+            status[name] = _redact_env_value(name, value)
+    return status
 
 
 def _load_capabilities(limit: int = 24) -> str:
@@ -65,6 +103,23 @@ def _load_capabilities(limit: int = 24) -> str:
     return "Filesystem:\n" + "\n".join(lines) + f"\nNetwork: {network}"
 
 
+def _audit(event: str, **fields: Any) -> None:
+    if not _inside_nono():
+        return
+
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "event": event,
+        **{k: v for k, v in fields.items() if v is not None},
+    }
+    try:
+        AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with AUDIT_LOG.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    except Exception:
+        return
+
+
 def _stringify(value: Any, max_chars: int = 6000) -> str:
     if isinstance(value, str):
         text = value
@@ -74,6 +129,24 @@ def _stringify(value: Any, max_chars: int = 6000) -> str:
         except Exception:
             text = str(value)
     return text[:max_chars]
+
+
+def _tool_fields(args: tuple[Any, ...], kwargs: dict[str, Any]) -> tuple[Any, Any, Any, Any]:
+    tool_name = kwargs.get("tool_name") or kwargs.get("name")
+    tool_args = kwargs.get("arguments") or kwargs.get("args") or kwargs.get("tool_input")
+    result = kwargs.get("result")
+    task_id = kwargs.get("task_id") or kwargs.get("tool_call_id")
+
+    if tool_name is None and args:
+        tool_name = args[0]
+    if tool_args is None and len(args) > 1:
+        tool_args = args[1]
+    if result is None and len(args) > 2:
+        result = args[2]
+    if task_id is None and len(args) > 3:
+        task_id = args[3]
+
+    return tool_name, tool_args, result, task_id
 
 
 def _extract_path(*values: Any) -> str | None:
@@ -139,26 +212,27 @@ Then offer either a one-off restart with an explicit nono grant or a persistent 
 """
 
 
-def _nono_status(_params: dict[str, Any] | None = None) -> str:
+def _nono_status(_params: dict[str, Any] | None = None, **_kwargs: Any) -> str:
     status = {
         "inside_nono": _inside_nono(),
         "capability_file": str(_cap_file()) if _cap_file() else None,
         "capabilities": _load_capabilities(),
+        "proxy": _proxy_status(),
+        "audit_log": str(AUDIT_LOG),
         "guidance": "Use nono why --path <path> --op <read|write|readwrite> for denied paths.",
     }
     return json.dumps(status, indent=2)
+
+
+def _nono_status_command(_raw_args: str = "") -> str:
+    return _nono_status()
 
 
 def _augment_tool_result(*args: Any, **kwargs: Any) -> str | None:
     if not _inside_nono():
         return None
 
-    tool_args = kwargs.get("arguments") or kwargs.get("args")
-    result = kwargs.get("result")
-    if tool_args is None and len(args) > 1:
-        tool_args = args[1]
-    if result is None and len(args) > 2:
-        result = args[2]
+    _tool_name, tool_args, result, _task_id = _tool_fields(args, kwargs)
 
     result_text = _stringify(result)
     if not DENIAL_RE.search(result_text):
@@ -168,17 +242,136 @@ def _augment_tool_result(*args: Any, **kwargs: Any) -> str | None:
     return result_text + "\n\n" + _denial_context(blocked_path, _load_capabilities())
 
 
+def _audit_tool_call(*args: Any, **kwargs: Any) -> None:
+    tool_name, tool_args, result, task_id = _tool_fields(args, kwargs)
+    result_text = _stringify(result, max_chars=1000)
+    denied = bool(DENIAL_RE.search(result_text))
+    blocked_path = _extract_path(tool_args, result)
+    session_id = _session_key(args, kwargs)
+    _audit(
+        "tool_call",
+        session_id=session_id,
+        task_id=task_id,
+        tool_name=tool_name,
+        denied=denied,
+        path=blocked_path,
+        duration_ms=kwargs.get("duration_ms"),
+    )
+    if denied and _inside_nono():
+        _PENDING_DENIAL_CONTEXT[session_id] = _denial_context(
+            blocked_path,
+            _load_capabilities(),
+        )
+
+
+def _audit_approval_request(
+    command: str | None = None,
+    description: str | None = None,
+    pattern_key: str | None = None,
+    pattern_keys: list[str] | None = None,
+    session_key: str | None = None,
+    surface: str | None = None,
+    **_kwargs: Any,
+) -> None:
+    command_hash = (
+        hashlib.sha256(command.encode("utf-8")).hexdigest() if command else None
+    )
+    _audit(
+        "approval_request",
+        session_id=session_key,
+        surface=surface,
+        pattern_key=pattern_key,
+        pattern_keys=pattern_keys,
+        description=description,
+        command_sha256=command_hash,
+    )
+
+
+def _audit_approval_response(
+    command: str | None = None,
+    description: str | None = None,
+    pattern_key: str | None = None,
+    pattern_keys: list[str] | None = None,
+    session_key: str | None = None,
+    surface: str | None = None,
+    choice: str | None = None,
+    **_kwargs: Any,
+) -> None:
+    command_hash = (
+        hashlib.sha256(command.encode("utf-8")).hexdigest() if command else None
+    )
+    _audit(
+        "approval_response",
+        session_id=session_key,
+        surface=surface,
+        choice=choice,
+        pattern_key=pattern_key,
+        pattern_keys=pattern_keys,
+        description=description,
+        command_sha256=command_hash,
+    )
+
+
 def _inject_context(*args: Any, **kwargs: Any) -> dict[str, str] | None:
     if not _inside_nono():
         return None
 
     key = _session_key(args, kwargs)
+    context_parts = []
     is_first_turn = bool(kwargs.get("is_first_turn"))
-    if not is_first_turn or key in _ANNOUNCED:
+    if is_first_turn and key not in _ANNOUNCED:
+        _ANNOUNCED.add(key)
+        context_parts.append(_startup_context())
+
+    denial_context = _PENDING_DENIAL_CONTEXT.pop(key, None)
+    if denial_context:
+        context_parts.append(denial_context)
+
+    if not context_parts:
         return None
 
-    _ANNOUNCED.add(key)
-    return {"context": _startup_context()}
+    return {"context": "\n\n".join(context_parts)}
+
+
+def _register_tool(ctx: Any, schema: dict[str, Any]) -> None:
+    try:
+        ctx.register_tool(
+            name="nono_status",
+            toolset="nono",
+            schema=schema,
+            handler=_nono_status,
+            description="Show the current nono sandbox capability summary.",
+        )
+    except TypeError:
+        ctx.register_tool("nono_status", schema, _nono_status)
+
+
+def _register_hook(ctx: Any, name: str, handler: Any) -> None:
+    try:
+        ctx.register_hook(name, handler)
+    except Exception:
+        return
+
+
+def _register_command(ctx: Any) -> None:
+    try:
+        ctx.register_command(
+            "nono-status",
+            handler=_nono_status_command,
+            description="Show the current nono sandbox status",
+        )
+    except Exception:
+        return
+
+
+def _register_skills(ctx: Any) -> None:
+    skill = Path(__file__).resolve().parent / "skills" / "nono-sandbox" / "SKILL.md"
+    if not skill.exists():
+        return
+    try:
+        ctx.register_skill("nono-sandbox", skill)
+    except Exception:
+        return
 
 
 def register(ctx: Any) -> None:
@@ -192,6 +385,11 @@ def register(ctx: Any) -> None:
         },
     }
 
-    ctx.register_tool("nono_status", schema, _nono_status)
-    ctx.register_hook("transform_tool_result", _augment_tool_result)
-    ctx.register_hook("pre_llm_call", _inject_context)
+    _register_tool(ctx, schema)
+    _register_command(ctx)
+    _register_skills(ctx)
+    _register_hook(ctx, "transform_tool_result", _augment_tool_result)
+    _register_hook(ctx, "post_tool_call", _audit_tool_call)
+    _register_hook(ctx, "pre_approval_request", _audit_approval_request)
+    _register_hook(ctx, "post_approval_response", _audit_approval_response)
+    _register_hook(ctx, "pre_llm_call", _inject_context)

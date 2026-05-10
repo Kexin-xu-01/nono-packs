@@ -1,7 +1,7 @@
 ---
 name: nono-sandbox
 description: Diagnose and resolve permission denials when Hermes Agent runs inside a nono security sandbox. Use when terminal, file, browser, MCP, plugin, or skill operations fail with "Operation not permitted", "Permission denied", EACCES, EPERM, landlock, or sandbox-denied errors.
-version: 1.0.0
+version: 1.2.0
 platforms: [macos, linux]
 metadata:
   hermes:
@@ -14,6 +14,10 @@ metadata:
 nono applies OS-level filesystem and network restrictions before Hermes starts. Landlock on Linux and Seatbelt on macOS enforce those restrictions outside the Hermes approval system.
 
 Hermes cannot expand nono access from inside the session. YOLO mode, `/yolo`, `approvals.mode: off`, `chmod`, `sudo`, or macOS privacy prompts do not grant new nono capabilities.
+
+## Provenance
+
+This skill is bundled by the `nono-sandbox` Hermes plugin from the signed `always-further/hermes` nono pack. Load it explicitly as `skill_view("nono-sandbox:nono-sandbox")` when provenance matters.
 
 ## When to use this skill
 
@@ -90,8 +94,10 @@ Use `read_file`, `write_file`, or `allow_file` only for exact single-file grants
 - The Hermes launcher may be a symlink under `~/.local/bin` pointing into `~/.hermes/hermes-agent/venv/bin`.
 - uv-managed Python installs often live under `~/.local/share/uv`; Hermes needs read access to the interpreter and standard library there.
 - Hermes state, logs, skills, sessions, pairing files, and `.env` live under `~/.hermes`. The base nono Hermes profile grants that directory read/write because Hermes needs its own state.
+- The Hermes profile enables nono network proxy filtering. Provider credentials are injected through nono credential routes when the corresponding nono credential is available.
+- With nono v0.51 or newer, TLS CONNECT traffic to credentialed or endpoint-filtered routes is intercepted with a session-scoped CA bundle. L7 endpoint rules and credential injection apply to ordinary HTTPS SDK calls as long as the client honors `HTTP_PROXY`, `HTTPS_PROXY`, and the injected CA variables.
 - For gateway deployments, prefer Hermes' container backends and keep explicit allowlists enabled.
-- Do not add Hermes infrastructure secrets to generic env passthrough. Prefer Hermes' dedicated credential mechanisms and skill-declared environment variables.
+- Do not add Hermes infrastructure secrets to generic env passthrough. Prefer Hermes' dedicated credential mechanisms and nono proxy credentials.
 
 ## Do not do
 

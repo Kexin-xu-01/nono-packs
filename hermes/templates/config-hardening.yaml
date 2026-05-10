@@ -1,6 +1,7 @@
-# Optional Hermes hardening snippet for sessions launched under nono.
-# Merge by hand with ~/.hermes/config.yaml; nono intentionally does not
-# auto-merge YAML user config.
+# Hermes hardening patch for sessions launched under nono.
+# Installed with nono's yaml_merge wiring into ~/.hermes/config.yaml.
+# YAML sequences are replaced as leaves by the merge engine, so keep
+# existing plugin/blocklist entries here if you maintain local additions.
 
 plugins:
   enabled:
@@ -11,6 +12,7 @@ approvals:
   timeout: 60
 
 security:
+  redact_secrets: true
   tirith_enabled: true
   tirith_fail_open: false
   allow_private_urls: false
@@ -22,11 +24,5 @@ security:
       - "metadata.google.internal"
       - "metadata.goog"
 
-terminal:
-  env_passthrough: []
-  credential_files: []
-
-quick_commands:
-  nono-status:
-    type: exec
-    command: ~/.config/nono/packages/always-further/hermes/bin/nono-hermes-status.sh
+skills:
+  guard_agent_created: true
