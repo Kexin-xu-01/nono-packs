@@ -37,7 +37,7 @@ Common affected tools include `terminal`, `execute_code`, file read/write/edit t
 2. Run:
 
    ```bash
-   nono why --path /the/blocked/path --op read
+   nono why --self --path /the/blocked/path --op read
    ```
 
 3. Use `--op write` for write-only failures and `--op readwrite` when the operation needs both.
@@ -67,9 +67,9 @@ nono run --profile hermes --allow /path/to/needed -- hermes
 
 Use `--read` instead of `--allow` when Hermes only needs view access.
 
-### Option B: persistent profile
+### Option B: profile draft
 
-Create a user profile under `~/.config/nono/profiles/<name>.json`:
+Create a profile draft under `~/.config/nono/profile-drafts/<name>.json`:
 
 ```json
 {
@@ -79,6 +79,15 @@ Create a user profile under `~/.config/nono/profiles/<name>.json`:
     "read": ["/path/to/needed"]
   }
 }
+```
+
+Do not write directly to `~/.config/nono/profiles` from inside the sandbox. Active profiles control future sandbox policy and must stay behind a user review step.
+
+The user reviews and promotes the draft outside the sandbox:
+
+```bash
+nono profile validate --draft hermes-extra
+nono profile promote hermes-extra
 ```
 
 Start future sessions with:
@@ -94,8 +103,10 @@ Use `read_file`, `write_file`, or `allow_file` only for exact single-file grants
 - The Hermes launcher may be a symlink under `~/.local/bin` pointing into `~/.hermes/hermes-agent/venv/bin`.
 - uv-managed Python installs often live under `~/.local/share/uv`; Hermes needs read access to the interpreter and standard library there.
 - Hermes state, logs, skills, sessions, pairing files, and `.env` live under `~/.hermes`. The base nono Hermes profile grants that directory read/write because Hermes needs its own state.
-- The Hermes profile enables nono network proxy filtering. Provider credentials are injected through nono credential routes when the corresponding nono credential is available.
+- The base Hermes profile defines provider credential routes but enables none by default. Users should create an extending profile and list only the needed routes in `network.credentials`.
+- The Hermes nono profile uses env-var-shaped keychain accounts for provider credentials: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `GITHUB_TOKEN`, and `GITLAB_TOKEN`. `GEMINI_API_KEY` is only a Hermes alias; prefer `GOOGLE_API_KEY`.
 - With nono v0.51 or newer, TLS CONNECT traffic to credentialed or endpoint-filtered routes is intercepted with a session-scoped CA bundle. L7 endpoint rules and credential injection apply to ordinary HTTPS SDK calls as long as the client honors `HTTP_PROXY`, `HTTPS_PROXY`, and the injected CA variables.
+- If Python asks to write `__pycache__` under `~/.config/nono/packages/.../plugin/nono-sandbox`, do not grant it. Restart Hermes with `PYTHONDONTWRITEBYTECODE=1` instead so signed package contents stay read-only.
 - For gateway deployments, prefer Hermes' container backends and keep explicit allowlists enabled.
 - Do not add Hermes infrastructure secrets to generic env passthrough. Prefer Hermes' dedicated credential mechanisms and nono proxy credentials.
 

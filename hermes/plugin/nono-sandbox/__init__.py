@@ -167,9 +167,9 @@ def _extract_path(*values: Any) -> str | None:
 def _denial_context(path: str | None, capabilities: str) -> str:
     display_path = path or "<blocked-path>"
     why = (
-        f"nono why --path {display_path} --op read"
+        f"nono why --self --path {display_path} --op read"
         if path
-        else "nono why --path <blocked-path> --op read"
+        else "nono why --self --path <blocked-path> --op read"
     )
     allow = (
         f"nono run --profile hermes --allow {display_path} -- hermes"
@@ -195,7 +195,8 @@ Next steps for the assistant:
    A. One-off restart:
       {allow}
    B. Persistent profile:
-      create or extend ~/.config/nono/profiles/<name>.json with the minimum filesystem grant.
+      create or extend ~/.config/nono/profile-drafts/<name>.json with the minimum filesystem grant.
+      The user must review and apply it with `nono profile promote <name>`.
 4. Use read/read_file for view-only access and allow/allow_file only when writes are needed.
 """
 
@@ -205,10 +206,10 @@ def _startup_context() -> str:
 
 This Hermes session is running inside nono. Filesystem and network access are enforced by the operating system before Hermes starts. Hermes approvals, YOLO mode, chmod, sudo, and macOS privacy settings cannot expand nono capabilities from inside the session.
 
-If a tool fails with "Operation not permitted", "Permission denied", EACCES, EPERM, "landlock", or "sandbox denied", diagnose with:
-  nono why --path <path> --op read
+If a tool fails with "Operation not permitted", "Permission denied", EACCES, EPERM, "landlock", or "sandbox denied", diagnose the live sandbox with:
+  nono why --self --path <path> --op read
 
-Then offer either a one-off restart with an explicit nono grant or a persistent profile change under ~/.config/nono/profiles/.
+Then offer either a one-off restart with an explicit nono grant or a persistent profile draft under ~/.config/nono/profile-drafts/. The user must review and apply drafts with `nono profile promote <name>`.
 """
 
 
@@ -219,7 +220,7 @@ def _nono_status(_params: dict[str, Any] | None = None, **_kwargs: Any) -> str:
         "capabilities": _load_capabilities(),
         "proxy": _proxy_status(),
         "audit_log": str(AUDIT_LOG),
-        "guidance": "Use nono why --path <path> --op <read|write|readwrite> for denied paths.",
+        "guidance": "Use nono why --self --path <path> --op <read|write|readwrite> for denied paths inside this sandbox.",
     }
     return json.dumps(status, indent=2)
 
