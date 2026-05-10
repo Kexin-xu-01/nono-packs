@@ -24,13 +24,6 @@ This installs the `claude-code-autoresearch` profile and wires the plugin into C
 
 See [autoresearch-nono](https://github.com/always-further/autoresearch-nono) for the full setup guide including attestation, data preparation, and launching.
 
-Quick launch:
-
-```bash
-git clone https://github.com/always-further/autoresearch-nono
-cd autoresearch-nono
-./launch.sh
-```
 
 ## What nono adds
 
