@@ -7,6 +7,7 @@
   "min_nono_version": "0.51.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "hermes" },
+    { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": "plugin/nono-sandbox/plugin.yaml" },
     { "type": "plugin", "path": "plugin/nono-sandbox/__init__.py" },
     { "type": "plugin", "path": "plugin/nono-sandbox/skills/nono-sandbox/SKILL.md" },

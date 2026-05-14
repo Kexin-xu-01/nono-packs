@@ -8,6 +8,7 @@
   "min_nono_version": "0.47.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "openclaw" },
+    { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": ".openclaw-plugin/plugin.json" },
     { "type": "plugin", "path": "settings.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
