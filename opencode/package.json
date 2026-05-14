@@ -7,6 +7,7 @@
   "min_nono_version": "0.44.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "opencode" },
+    { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": "plugin/nono-sandbox.ts" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
     { "type": "plugin", "path": "wiring/profile-drafts-dir-marker" }
