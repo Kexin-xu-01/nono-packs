@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook.sh - Claude Code plugin hook for nono sandbox diagnostics
 # Version: 1.3.0
 #

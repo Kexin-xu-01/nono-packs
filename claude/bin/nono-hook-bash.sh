@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook-bash.sh - PostToolUse hook for Bash commands
 # Version: 1.1.0
 #
