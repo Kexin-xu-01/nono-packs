@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
 # Version: 1.5.0
 #

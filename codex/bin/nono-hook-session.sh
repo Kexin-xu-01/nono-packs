@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook-session.sh - Codex SessionStart hook
 # Version: 1.1.0
 #

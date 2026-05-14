@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook.sh - OpenClaw hook for nono sandbox diagnostics
 # Version: 1.2.0
 #
