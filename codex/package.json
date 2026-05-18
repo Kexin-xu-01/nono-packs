@@ -8,7 +8,6 @@
   "min_nono_version": "0.44.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "codex" },
-    { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": ".codex-plugin/plugin.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "bin/nono-hook-session.sh" },
