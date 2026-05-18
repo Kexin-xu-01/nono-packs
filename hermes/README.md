@@ -1,22 +1,17 @@
-# nono hermes
+<p align="center">
+  <img src="./assets/logo.png" alt="nono codex" width="500" />
+</p>
+
 
 Sandbox profile, Hermes plugin, and Hermes skill for running [Hermes Agent](https://hermes-agent.nousresearch.com/) inside a [nono](https://nono.sh) security sandbox.
 
 Install:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 nono run --profile hermes -- hermes
+  nono run --profile always-further/hermes -- hermes
 ```
 
 If the pack is not already installed, nono will prompt to pull it.
-
-## What's in the pack
-
-- **`policy.json`** — sandbox profile loaded as `--profile hermes`. Grants Hermes state under `~/.hermes`, nono profile draft writes under `~/.config/nono/profile-drafts`, read-only package metadata under `~/.config/nono/packages`, the Hermes launcher directory, and uv-managed Python runtimes under `~/.local/share/uv`. It does not grant write access to active nono profiles, nono's own audit state, or rollback state.
-- **`policy.json` network controls** — ships reusable provider credential route definitions for OpenAI, Anthropic, Gemini, GitHub, and GitLab, but enables none by default. Users opt into the routes they need from an extending profile. Requires nono v0.51+ so enabled routes also apply to TLS CONNECT traffic through nono's interception path.
-- **`plugin/nono-sandbox/`** — Hermes plugin. It registers a `nono_status` tool, `/nono-status` slash command, plugin-provenanced `nono-sandbox:nono-sandbox` skill, first-turn sandbox boundary context, redacted proxy/TLS trust context, denial remediation context, and metadata-only audit events under `~/.hermes/logs/nono-sandbox-audit.ndjson`.
-- **`bin/nono-hermes-status.sh`** — small diagnostic script for checking Hermes, nono, current capabilities, proxy/TLS trust state, and sensitive Hermes file permissions.
-- **`templates/config-hardening.yaml`** — YAML merge patch for enabling the plugin, fail-closed Tirith scanning, secret redaction, private URL blocking, and Hermes skill-write guarding.
 
 ## Activating the plugin
 
@@ -42,13 +37,7 @@ skill_view("nono-sandbox:nono-sandbox")
 
 The plugin also exposes `/nono-status` and the `nono_status` tool after Hermes reloads.
 
-`PYTHONDONTWRITEBYTECODE=1` prevents Python from trying to create `__pycache__` under the signed, read-only package store while Hermes imports the plugin. Do not grant write access to `~/.config/nono/packages/.../plugin/nono-sandbox` to silence that cache write.
 
-When checking capabilities from outside Hermes, include the profile context:
-
-```bash
-nono why --profile hermes --path ~/.config/nono/packages/<ns>/hermes/plugin/nono-sandbox/__init__.py --op read
-```
 
 Inside a running Hermes sandbox, use `nono why --self` so the query uses the live capability file.
 
@@ -152,26 +141,15 @@ For 1Password, Apple Passwords, file-backed secrets, environment references, or 
 Run Hermes with the child profile:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 nono run --profile hermes-agent -- hermes
+nono run --profile hermes-agent -- hermes
 ```
 
-With nono v0.51 or newer, enabled credential routes also cover normal HTTPS SDK traffic that uses `CONNECT` through the nono proxy. When a route has credentials or endpoint rules, nono creates a session-scoped interception CA under `~/.nono/sessions/...`, injects the relevant trust environment variables (`SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `CURL_CA_BUNDLE`, and `GIT_SSL_CAINFO`), terminates the eligible TLS tunnel, and applies the same L7 filtering and credential injection inside the proxy. If TLS interception cannot be prepared, nono blocks L7-bearing CONNECT routes instead of allowing a bypass.
+## Complaints about __pycache__
 
-Use `allow_domain` only for additional non-credentialed destinations the agent needs. Credential routes already constrain their own upstream service and method/path rules, so a Gemini-only profile does not need broad domains just to call Gemini.
+`PYTHONDONTWRITEBYTECODE=1` prevents Python from trying to create `__pycache__` under the signed, read-only package store while Hermes imports the plugin. Do not grant write access to `~/.config/nono/packages/.../plugin/nono-sandbox` to silence that cache write.
 
-The status helper redacts proxy URL userinfo because v0.51 proxy URLs can contain the session proxy token.
+When checking capabilities from outside Hermes, include the profile context:
 
-## Research notes
-
-The pack maps directly to Hermes security features:
-
-- Hermes approvals catch risky commands, but nono remains the outer OS boundary. The plugin therefore steers the agent toward `nono why` and profile changes instead of approval workarounds.
-- Hermes plugin-bundled skills preserve provenance and avoid copying registry-managed content into the mutable user skill tree.
-- Hermes plugin hooks are the right CLI+gateway surface for sandbox diagnostics and metadata-only audit. Gateway-only event hooks are useful for production monitoring, but this pack keeps them out of the default install to avoid surprise network callbacks.
-- Hermes supports online skills registries, direct URL installs, GitHub taps, and well-known skill endpoints. `registry.nono.sh` could be valuable as a curated nono-specific skill and pack registry if it keeps signed provenance, review metadata, and security-scan results rather than becoming an unreviewed skill dump.
-
-## Source
-
-`https://github.com/always-further/nono-packs/tree/main/hermes`
-
-Published via Sigstore-signed releases triggered by tags matching `hermes-v*`.
+```bash
+nono why --profile hermes --path ~/.config/nono/packages/<ns>/hermes/plugin/nono-sandbox/__init__.py --op read
+```
