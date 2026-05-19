@@ -213,13 +213,13 @@ Reads the key from `OPENROUTER_API_KEY` in nono's own environment. `env_var` is 
 
 ```json
 "credential_key": "op://Personal/OpenRouter/credential",
-"env_var": "OPENROUTER_API_KEY"
+"env_var": "OPENAI_API_KEY"
 ```
 Fetches the key from 1Password at runtime. `env_var` is required for `op://` so nono knows which variable to inject into the sandbox.
 
 ```json
 "credential_key": "file:///run/secrets/openrouter.key",
-"env_var": "OPENROUTER_API_KEY"
+"env_var": "OPENAI_API_KEY"
 ```
 Reads the key from a file. `env_var` is required for `file://`.
 
@@ -238,11 +238,13 @@ Open your child profile (`~/.config/nono/profile/hermes.json`) and update the `n
     "openrouter": {
       "upstream": "https://openrouter.ai/api/v1",
       "credential_key": "OPENROUTER_API_KEY",
-      "env_var": "OPENROUTER_API_KEY"
+      "env_var": "OPENAI_API_KEY"
     }
   }
 }
 ```
+
+Note: keep the real OpenRouter secret stored under `OPENROUTER_API_KEY`, but inject the phantom token into `OPENAI_API_KEY` for Hermes. Hermes currently chooses API-key environment variables by inspecting the configured base URL host. Inside nono, Hermes sees the local proxy URL (`http://127.0.0.1:<port>/openrouter`), not `openrouter.ai`, so it follows its OpenAI-compatible fallback path and reads `OPENAI_API_KEY` before `OPENROUTER_API_KEY`.
 
 The map key (`"openrouter"`) is the route name. **It must also appear in the `credentials` array** — nono only activates routes explicitly listed there. `inject_header` and `credential_format` are omitted because the defaults (`"Authorization"` and `"Bearer {}"`) already match what OpenRouter expects.
 
