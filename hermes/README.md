@@ -33,16 +33,16 @@ nono pull always-further/hermes
 **Step 2 — create a custom profile:**
 
 ```bash
-nono profile init hermes-agent --extends always-further/hermes --full
+nono profile init hermes --extends always-further/hermes --full
 ```
 
 **Step 3 — run Hermes:**
 
 ```bash
-nono run --profile hermes-agent --allow-cwd -- hermes
+nono run --profile hermes --allow-cwd -- hermes
 ```
 
-Your custom profile is also where you add credential routes, extra filesystem grants, and any other customizations — see the sections below.
+A custom profile is also where you add credential routes, extra filesystem grants, and any other customizations — see the sections below.
 
 ### First-run grants prompt
 
@@ -87,10 +87,10 @@ To create your own custom profile that extends the base `always-further/hermes` 
 > If you already created a profile via the first-run grants prompt, use that same name here — `nono profile init` will extend it rather than creating a second one.
 
 ```bash
-nono profile init hermes-agent --extends always-further/hermes --full
+nono profile init hermes --extends always-further/hermes --full
 ```
 
-This will create a `~/.config/nono/profile/hermes-agent.json` file that you can then customize to your needs. The `--full` flag ensures that the generated profile includes all sections, making it easier to see what you can customize.
+This will create a `~/.config/nono/profile/hermes.json` file that you can then customize to your needs. The `--full` flag ensures that the generated profile includes all sections, making it easier to see what you can customize.
 
 ## Credential Protection
 
@@ -102,7 +102,7 @@ nono protects API keys using a **phantom credential** model. Rather than passing
 
 The base `hermes` profile does not enable provider credentials by default. This avoids warnings for unused providers from becoming part of the session boundary.
 
-The following providers are built in and ready to use. How you store the key depends on the route — some read from the system keychain, others read from an environment variable in nono's own process:
+The following providers are built in and ready to use. How you store the key depends on the route — some read from the system keychain, others read from an environment variable in nono's own process
 
 | Route Name  | Provider   | Storage method       | Key name / account  |
 |-------------|------------|----------------------|---------------------|
@@ -112,7 +112,7 @@ The following providers are built in and ready to use. How you store the key dep
 | `github`    | GitHub     | nono keychain        | `GITHUB_TOKEN`      |
 | `gitlab`    | GitLab     | nono keychain        | `GITLAB_TOKEN`      |
 
-Store each key in the nono keychain service using the exact account name shown in the table above.
+Store each key in the nono keychain service using the exact account name shown in the table above. Then add the route name to the `credentials` array in your child profile's `network` block to activate it (see "Step 2 - enable the route in your profile"). The proxy will handle the rest — when Hermes makes a request to an API endpoint matching the route, nono swaps in the real key from the keychain before forwarding the request upstream.
 
 #### Step 1 — store the key
 
@@ -120,7 +120,7 @@ Store each key in the nono keychain service using the exact account name shown i
 
 macOS Keychain:
 
-macOS Keychain:
+You can add the key with `security` or the Keychain UI. The `-a` flag sets the account name, which is how nono looks up the key at runtime. The `-s` flag sets the service, which nono uses to group related credentials together in the UI. The Apple keychain provides a secure level of isolation by service and account, so as long as you use a unique combination for your nono credentials they won't be visible to other apps on the system.
 
 ```bash
 security add-generic-password -U -s "nono" -a "OPENAI_API_KEY" -w
@@ -144,7 +144,7 @@ secret-tool store --label="nono: GOOGLE_API_KEY" \
 
 On Linux this requires a running Secret Service provider such as GNOME Keyring or KWallet. In SSH-only or headless environments, check the nono credential docs before choosing a storage backend.
 
-If your keys live in 1Password, Apple Passwords, a file, or an environment variable, you can override any built-in route using `custom_credentials` — see the [Custom providers](#custom-providers) section below for field details and examples.
+If your keys live in 1Password, a file, or an environment variable, you can override any built-in route using `custom_credentials` — see the [Custom providers](#custom-providers) section below for field details and examples.
 
 For the full credential URI ref model (`op://`, `apple-password://`, `file://`, `env://`), see:
 
@@ -152,7 +152,7 @@ For the full credential URI ref model (`op://`, `apple-password://`, `file://`, 
 
 #### Step 2 — enable the route in your profile
 
-Open your child profile (`~/.config/nono/profile/hermes-agent.json`) and add the route name to the `credentials` array in the `network` block:
+Open your child profile (`~/.config/nono/profile/hermes.json`) and add the route name to the `credentials` array in the `network` block:
 
 ```json
 "network": {
@@ -183,11 +183,9 @@ If the provider you need isn't in the built-in list, you can add it with `custom
 
 This example adds [OpenRouter](https://openrouter.ai) — an OpenAI-compatible model-routing API that authenticates with `Authorization: Bearer <key>`.
 
-#### How phantom credentials and endpoint rules work
+#### How phantom credentials work
 
-nono generates a phantom token and injects it into Hermes as an environment variable. When Hermes makes an outbound call, the proxy validates the phantom, fetches the real key from the keystore, and swaps it in before the request leaves the machine.
-
-`endpoint_rules` adds an L7 allow-list on top of that. Each rule is a `{"method", "path"}` pair. When the list is non-empty the proxy rejects any request that doesn't match — even if the phantom token is valid. This prevents a compromised agent from using the credential to reach billing endpoints, account management, or any other API surface you haven't explicitly declared.
+nono generates a phantom token and injects it into Hermes as an environment variable. When Hermes makes an outbound call, the proxy validates the phantom, fetches the real key from the keystore, and swaps it in before the request leaves the machine. The credential never enters the sandbox — Hermes only ever sees the short-lived phantom.
 
 #### Step 1 — store the key
 
@@ -227,7 +225,7 @@ Reads the key from a file. `env_var` is required for `file://`.
 
 #### Step 2 — add the route to your profile
 
-Open your child profile (`~/.config/nono/profile/hermes-agent.json`) and update the `network` block:
+Open your child profile (`~/.config/nono/profile/hermes.json`) and update the `network` block:
 
 ```json
 "network": {
@@ -238,19 +236,17 @@ Open your child profile (`~/.config/nono/profile/hermes-agent.json`) and update 
   "listen_port": [],
   "custom_credentials": {
     "openrouter": {
-      "upstream": "https://openrouter.ai",
+      "upstream": "https://openrouter.ai/api/v1",
       "credential_key": "OPENROUTER_API_KEY",
-      "env_var": "OPENROUTER_API_KEY",
-      "endpoint_rules": [
-        { "method": "POST", "path": "/api/v1/chat/completions" },
-        { "method": "GET",  "path": "/api/v1/models" }
-      ]
+      "env_var": "OPENROUTER_API_KEY"
     }
   }
 }
 ```
 
-The map key (`"openrouter"`) is the route name. **It must also appear in the `credentials` array** — nono only activates routes explicitly listed there. `inject_header` and `credential_format` are omitted here because the defaults (`"Authorization"` and `"Bearer {}"`) already match what OpenRouter expects.
+The map key (`"openrouter"`) is the route name. **It must also appear in the `credentials` array** — nono only activates routes explicitly listed there. `inject_header` and `credential_format` are omitted because the defaults (`"Authorization"` and `"Bearer {}"`) already match what OpenRouter expects.
+
+For tighter control you can add `endpoint_rules` — a list of `{"method", "path"}` pairs that act as an L7 allow-list. When non-empty, the proxy rejects any request that doesn't match, even with a valid phantom token. This is useful if you want to restrict a credential to inference-only endpoints and block billing, account management, or other API surfaces the agent should never reach. Omit it, as above, to allow all paths under the route.
 
 #### Field reference
 
@@ -274,7 +270,7 @@ The map key (`"openrouter"`) is the route name. **It must also appear in the `cr
 Run Hermes with your child profile:
 
 ```bash
-nono run --profile hermes-agent -- hermes
+nono run --profile hermes -- hermes
 ```
 
 ## Audit Logging
@@ -294,13 +290,13 @@ nono audit cleanup                       # remove old sessions
 To disable audit logging for a session, pass `--no-audit`:
 
 ```bash
-nono run --profile hermes-agent --no-audit -- hermes
+nono run --profile hermes --no-audit -- hermes
 ```
 
 If you want the session log but don't need tamper-evident protection:
 
 ```bash
-nono run --profile hermes-agent --no-audit-integrity -- hermes
+nono run --profile hermes --no-audit-integrity -- hermes
 ```
 
 If you add secrets-adjacent flags to your Hermes invocation, you can extend nono's redaction rules so they never appear in the log. Add to `~/.config/nono/config.toml`:
@@ -317,7 +313,7 @@ extra_query_keys = ["sig", "signature"]
 nono can snapshot the filesystem before Hermes runs and let you selectively restore any files it changed or deleted. This is useful when you want to review or undo an agent session without having to figure out what changed by hand.
 
 ```bash
-nono run --rollback --profile hermes-agent -- hermes
+nono run --rollback --profile hermes  -- hermes
 ```
 
 With `--rollback` active, nono takes a baseline snapshot before execution and a final snapshot after. When Hermes exits, if any files were modified or deleted you get an interactive review showing a per-file diff and a prompt to restore whichever files you want back.
@@ -336,7 +332,7 @@ nono rollback cleanup --older-than 7      # remove sessions older than 7 days
 To suppress the interactive review prompt (for scripting):
 
 ```bash
-nono run --rollback --no-rollback-prompt --profile hermes-agent -- hermes
+nono run --rollback --no-rollback-prompt --profile hermes -- hermes
 ```
 
 Exclude noisy paths from snapshot tracking in your child profile:
@@ -378,4 +374,3 @@ nono profile promote hermes-agent
 ```bash
 nono remove always-further/hermes
 ```
-
