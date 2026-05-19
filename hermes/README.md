@@ -22,28 +22,35 @@ Installation instructions are available on [nono's documentation site](https://n
 
 ### Installing the hermes plugin
 
-nono provides an official hermes profile on the nono registry. Should you need to, need to you can then extend from this profile and customize it to your needs. Most of you will be wanting to use credential injection and other features, as well as add your own workspace folders and other customizations, so extending the profile is likely the way to go for most users. This is covered in the Custom profiles section below.
+Pull the package first, then create a custom profile before running. This avoids the interactive grants prompt that appears when nono encounters paths the base profile doesn't cover:
 
-The following command both retrieves the `always-further/hermes` plugin and runs hermes inside the sandbox:
-
-```bash
-  nono run --profile always-further/hermes --allow-cwd -- hermes
-```
-
-Should you need to pull the package in a seperate step, you can do so with:
+**Step 1 — pull the package:**
 
 ```bash
-  nono pull always-further/hermes
+nono pull always-further/hermes
 ```
+
+**Step 2 — create a custom profile:**
+
+```bash
+nono profile init hermes-agent --extends always-further/hermes --full
+```
+
+**Step 3 — run Hermes:**
+
+```bash
+nono run --profile hermes-agent --allow-cwd -- hermes
+```
+
+Your custom profile is also where you add credential routes, extra filesystem grants, and any other customizations — see the sections below.
 
 ### First-run grants prompt
 
-On first run, nono may detect paths that Hermes needs but that the base profile doesn't cover — your shell config, a tool on a non-standard path, etc. When this happens you'll see a prompt like:
+If you run nono before creating a custom profile, nono may detect paths that Hermes needs but that the base profile doesn't cover — your shell config, a tool on a non-standard path, etc. When this happens you'll see a prompt like:
 
 ```
-Sandbox denial: 4 paths blocked.
+Sandbox denial: 3 paths blocked.
   ~/.config/gh (read)
-  ~/.config/nono/packages/always-further/hermes/plugin/nono-sandbox/__pycache__ (write)
   ~/dev/dotfiles/zsh (read)
   /usr/local/sbin (read)
 
@@ -51,11 +58,11 @@ Sandbox denial: 4 paths blocked.
 Save suggestions to a user profile? [g] grant / [s] suppress / [Enter] skip:
 ```
 
-- **`g` (grant)** — saves the extra path grants to a user profile. nono will prompt you for a name; use the same name you plan to use for your custom credential profile (e.g. `hermes-agent`), or extend from it later so both sets of grants live in one place. If you create a separate grants profile here, remember to pass it alongside your credential profile: `nono run --profile hermes-agent --profile hermes-grants -- hermes`.
+- **`g` (grant)** — saves the extra path grants to a user profile. Use the same name you plan to use for your custom profile (e.g. `hermes-agent`) so both sets of grants live in one place.
 - **`s` (suppress)** — stops nono from suggesting these paths in future. The paths remain denied.
-- **Enter (skip)** — skips saving for now. The paths stay denied this session but you'll be prompted again next time.
+- **Enter (skip)** — skips saving for now. You'll be prompted again next time.
 
-If you already know you want a custom profile, the cleanest approach is to skip (`Enter`) here and add the paths manually to your child profile's `filesystem.allow` block instead, so everything is in one place.
+The cleanest approach is to skip (`Enter`) and add any extra paths manually to your child profile's `filesystem.read` or `filesystem.allow` block.
 
 ## Activating the plugin
 
@@ -372,14 +379,3 @@ nono profile promote hermes-agent
 nono remove always-further/hermes
 ```
 
-## Complaints about __pycache__
-
-`PYTHONDONTWRITEBYTECODE=1` prevents Python from trying to create `__pycache__` under the signed, read-only package store while Hermes imports the plugin. 
-
-Do not grant write access to `~/.config/nono/packages/.../plugin/nono-sandbox` to silence that cache write.
-
-When checking capabilities from outside Hermes, include the profile context:
-
-```bash
-nono why --profile hermes --path ~/.config/nono/packages/<ns>/hermes/plugin/nono-sandbox/__init__.py --op read
-```

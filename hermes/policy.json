@@ -32,6 +32,9 @@
       "$HOME/.local/bin",
       "$HOME/.local/share/uv",
       "$HOME/.config/nono/packages"
+    ],
+    "suppress_save_prompt": [
+      "~/.config/nono/packages/always-further/hermes/plugin/nono-sandbox"
     ]
   },
   "network": {
