@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "hermes",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Hermes Agent plugin, skill, and matching nono profile. Provides sandbox-aware diagnostics and safer Hermes defaults when running inside nono.",
   "license": "Apache-2.0",
   "platforms": ["macos", "linux"],
@@ -11,6 +11,7 @@
     { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": "plugin/nono-sandbox/plugin.yaml" },
     { "type": "plugin", "path": "plugin/nono-sandbox/__init__.py" },
+    { "type": "plugin", "path": "assets/logo.png" },
     { "type": "plugin", "path": "plugin/nono-sandbox/skills/nono-sandbox/SKILL.md" },
     { "type": "plugin", "path": "bin/nono-hermes-status.sh" },
     { "type": "plugin", "path": "templates/config-hardening.yaml" }
