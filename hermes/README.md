@@ -250,25 +250,6 @@ The map key (`"openrouter"`) is the route name. **It must also appear in the `cr
 
 For tighter control you can add `endpoint_rules` — a list of `{"method", "path"}` pairs that act as an L7 allow-list. When non-empty, the proxy rejects any request that doesn't match, even with a valid phantom token. This is useful if you want to restrict a credential to inference-only endpoints and block billing, account management, or other API surfaces the agent should never reach. Omit it, as above, to allow all paths under the route.
 
-#### Field reference
-
-| Field               | Required                                   | Default      | Description |
-|---------------------|--------------------------------------------|--------------|-------------|
-| `upstream`          | yes                                        | —            | HTTPS base URL of the provider. HTTP is only permitted for loopback addresses. |
-| `credential_key`    | yes                                        | —            | Keystore account name or a URI ref: `env://VAR`, `op://vault/item/field`, `apple-password://server/account`, `file:///path`, or `keyring://service/account`. |
-| `env_var`           | required for `op://`, `apple-password://`, `file://` | — | Environment variable injected into the sandbox with the phantom token. The SDK reads this name; nono's proxy validates and replaces it with the real key before forwarding upstream. Not required when `credential_key` is `env://`. |
-| `inject_mode`       | no                                         | `"header"`   | One of: `"header"`, `"url_path"`, `"query_param"`, `"basic_auth"`. |
-| `inject_header`     | no (header mode)                           | `"Authorization"` | HTTP header to inject the credential into. |
-| `credential_format` | no (header mode)                           | `"Bearer {}"` for `Authorization`; `"{}"` for others | Format string with `{}` placeholder for the credential value. |
-| `path_pattern`      | url_path mode                              | —            | URL path pattern containing `{}` where the phantom token appears. |
-| `path_replacement`  | no (url_path mode)                         | same as `path_pattern` | Replacement pattern for the outbound URL path. |
-| `query_param_name`  | query_param mode                           | —            | Query parameter name carrying the phantom token. |
-| `endpoint_rules`    | no                                         | `[]` (allow all) | L7 allow-list of `{"method": "...", "path": "..."}` objects. Default-deny when non-empty. |
-| `proxy`             | no                                         | —            | Overrides applied only to phantom token parsing on the proxy side. Outbound injection continues to use top-level fields. |
-| `tls_ca`            | no                                         | —            | Path to a PEM-encoded CA certificate for upstreams with a private or self-signed CA. |
-| `tls_client_cert`   | no                                         | —            | Path to a PEM-encoded client certificate for mTLS. Must be set together with `tls_client_key`. |
-| `tls_client_key`    | no                                         | —            | Path to the PEM-encoded private key matching `tls_client_cert`. |
-
 Run Hermes with your child profile:
 
 ```bash
@@ -348,7 +329,27 @@ Exclude noisy paths from snapshot tracking in your child profile:
 
 `.gitignore` entries in the working directory are also respected automatically.
 
-## nono commands
+## Run detached
+
+By default, nono runs Hermes as a child process. This means if you stop the nono session, you also stop Hermes and any subprocesses it spawned. If you want Hermes to keep running after you exit nono, use `--detached`:
+
+```bash
+nono run --profile hermes --detached -- hermes
+```
+
+You can now attach to the running session later to review logs, check status, or run `nono why` queries:
+
+```bash
+nono attach <session-id>
+```
+
+To view details of all running sessions:
+
+```bash
+nono ps
+```
+
+## nono inbuilt helper commands
 
 The plugin then exposes `/nono-status` and the `nono_status` tool after Hermes reloads.
 
