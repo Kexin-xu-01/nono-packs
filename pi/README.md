@@ -68,18 +68,14 @@ The cleanest approach is to skip (`Enter`) and add any extra paths manually to y
 
 ## Activating the plugin
 
-Plugin activation happens automatically on first run, the package symlinks itself into:
+Plugin activation happens automatically on first run. The package appends an entry to the `packages` array in `~/.pi/agent/settings.json`:
 
-```text
-~/.pi/plugins/nono-sandbox
-```
-
-and merges this into `~/.pi/config.yaml`:
-
-```yaml
-plugins:
-  enabled:
-    - nono-sandbox
+```json
+{
+  "packages": [
+    { "source": "/path/to/installed/pack" }
+  ]
+}
 ```
 
 ## Custom profiles
