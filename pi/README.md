@@ -3,26 +3,9 @@
 </p>
 
 
-`pi` is a nono package for [Pi Coding Agent](https://pi.dev).
-
-It installs:
-
-- a `pi` nono profile for running Pi inside an OS-enforced sandbox
-- a Pi package that loads a `nono-sandbox` extension and skill
-- wiring that adds the installed pack directory to `~/.pi/agent/settings.json`
-
-## Overview
-
-The following features work together to protect your system and credentials when running Pi inside nono:
-
-- **Your API keys stay out of the process.** nono uses a phantom credential model — pi never sees your real keys. The proxy swaps in the real credential only at the network boundary, so a compromised agent or tool cannot steal and reuse them elsewhere.
-- **File access is locked to what you allow.** The OS kernel (Landlock on Linux, Seatbelt on macOS) enforces which paths pi can read or write. It cannot reach your SSH keys, dotfiles, or anything outside the declared scope — regardless of what it's instructed to do.
-- **Credential misuse is blocked at the API level.** Even when pi has network access, each credential route can be locked to a specific set of API endpoints. A phantom token for your OpenAI key can be restricted to `/v1/chat/completions` only — so a compromised agent cannot use it to query billing, enumerate your organisation, or hit any other API surface you haven't explicitly permitted.
-- **Every session is audited.** nono writes a tamper-evident, append-only log of everything pi did — commands, capability decisions, network events, and filesystem paths — so you can review exactly what happened after the fact.
-- **Undo agent sessions with rollbacks.** nono can snapshot the filesystem before pi runs and give you a per-file diff and interactive restore prompt when it exits, so you can reverse changes without having to work out what the agent touched by hand.
+`pi` is a nono package for [Pi Coding Agent](https://pi.dev). It provides a secure sandbox for running pi and any tools it invokes, with built-in protections for your API keys, system credentials, and filesystem. Use it to safely run pi on your machine and sleep a little easier knowing that even if pi or a tool it runs goes rogue, your secrets and system are protected by nono's multi-layered security model.
 
 ## Install
-
 
 Pull the package first, then create a custom profile before running. This avoids the interactive grants prompt that appears when nono encounters paths the base profile doesn't cover:
 
@@ -38,13 +21,11 @@ nono pull always-further/pi
 nono profile init pi --extends always-further/pi --full
 ```
 
-**Step 3 — run pi:**
+A custom profile is also where you add credential routes, API keys, tokens, extra filesystem grants, and any other customizations — see the sections below. Its worth running this step, even if you don't think you'll need any custom grants or credentials, just to avoid the grants prompt later. 
 
 ```bash
 nono run --profile pi --allow-cwd -- pi
 ```
-
-A custom profile is also where you add credential routes, extra filesystem grants, and any other customizations — see the sections below.
 
 ### First-run grants prompt
 
@@ -60,35 +41,17 @@ Sandbox denial: 3 paths blocked.
 Save suggestions to a user profile? [g] grant / [s] suppress / [Enter] skip:
 ```
 
-- **`g` (grant)** — saves the extra path grants to a user profile. Use the same name you plan to use for your custom profile (e.g. `pi-agent`) so both sets of grants live in one place.
+- **`g` (grant)** — saves the extra path grants to a user profile. Use the same name you plan to use for your custom profile (e.g. `pi`) so both sets of grants live in one place.
 - **`s` (suppress)** — stops nono from suggesting these paths in future. The paths remain denied.
 - **Enter (skip)** — skips saving for now. You'll be prompted again next time.
 
 The cleanest approach is to skip (`Enter`) and add any extra paths manually to your child profile's `filesystem.read` or `filesystem.allow` block.
 
-## Activating the plugin
-
-Plugin activation happens automatically on first run. The package appends an entry to the `packages` array in `~/.pi/agent/settings.json`:
-
-```json
-{
-  "packages": [
-    { "source": "/path/to/installed/pack" }
-  ]
-}
-```
-
-## Custom profiles
+## Custom profiles 
 
 To create your own custom profile that extends the base `always-further/pi` profile, use the `nono profile init` command with the `--extends` flag. This allows you to inherit from the base profile while customizing specific aspects such as credential routes and network filtering.
 
-> If you already created a profile via the first-run grants prompt, use that same name here — `nono profile init` will extend it rather than creating a second one.
-
-```bash
-nono profile init pi --extends always-further/pi --full
-```
-
-This will create a `~/.config/nono/profile/pi.json` file that you can then customize to your needs. The `--full` flag ensures that the generated profile includes all sections, making it easier to see what you can customize.
+Hopefully you already have a `~/.config/nono/profile/pi.json` file from the earlier step (if not go back and run `nono profile init`), you can now edit that file to add credential routes, API keys, tokens, extra filesystem grants, and any other customizations — see the sections below. When you're happy with the profile, create a repo, push the code and add it to this registry, you can then pull your custom profile from any machine`nono pull johndoe/<your-profile>` and run pi just how you like with the same profile and settings everywhere.
 
 ## Credential Protection
 
@@ -110,13 +73,34 @@ The following providers are built in and ready to use. How you store the key dep
 | `github`    | GitHub     | nono keychain        | `GITHUB_TOKEN`      |
 | `gitlab`    | GitLab     | nono keychain        | `GITLAB_TOKEN`      |
 
-Store each key in the nono keychain service using the exact account name shown in the table above. Then add the route name to the `credentials` array in your child profile's `network` block to activate it (see "Step 2 - enable the route in your profile"). The proxy will handle the rest — when pi makes a request to an API endpoint matching the route, nono swaps in the real key from the keychain before forwarding the request upstream.
+Store each key in the nono keychain service using the exact account name shown in the table above. Then add the route name to the `credentials` array in your child profile's `network` block to activate it:
+
+```json
+  "network": {
+    "block": false,
+    "allow_domain": [],
+    "credentials": ["gemini"],
+    "open_port": [],
+    "listen_port": [],
+    "custom_credentials": {}
+  },
+```
+
+ The proxy will handle the rest — when pi makes a request to an API endpoint matching the route, nono swaps in the real key from the keychain before forwarding the request upstream.
+
+ You can enable multiple providers at once:
+
+```json
+"credentials": ["anthropic", "github"]
+```
+
+ If you want to use a provider that isn't in the built-in list, add it with `custom_credentials` — see the [Custom providers](#custom-providers) section below for field details and examples. This allows you to set the Header structure, credential source, and even endpoint allow-listing for any API you like, not just the built-in ones. Later we will look at an example of adding OpenRouter as a custom provider.
 
 #### Step 1 — store the key
 
 **For keychain-backed routes** (`openai`, `gemini`):
 
-macOS Keychain:
+##### macOS Keychain:
 
 You can add the key with `security` or the Keychain UI. The `-a` flag sets the account name, which is how nono looks up the key at runtime. The `-s` flag sets the service, which nono uses to group related credentials together in the UI. The Apple keychain provides a secure level of isolation by service and account, so as long as you use a unique combination for your nono credentials they won't be visible to other apps on the system.
 
@@ -130,7 +114,7 @@ security add-generic-password -U -s "nono" -a "GITLAB_TOKEN" -w
 
 Keep `-w` last so macOS prompts for the value instead of recording it in shell history.
 
-Linux Secret Service:
+##### Linux Secret Service:
 
 ```bash
 secret-tool store --label="nono: OPENAI_API_KEY" \
@@ -142,37 +126,20 @@ secret-tool store --label="nono: GOOGLE_API_KEY" \
 
 On Linux this requires a running Secret Service provider such as GNOME Keyring or KWallet. In SSH-only or headless environments, check the nono credential docs before choosing a storage backend.
 
+###### Alternative storage methods
+
 If your keys live in 1Password, a file, or an environment variable, you can override any built-in route using `custom_credentials` — see the [Custom providers](#custom-providers) section below for field details and examples.
 
 For the full credential URI ref model (`op://`, `apple-password://`, `file://`, `env://`), see:
 
 - https://nono.sh/docs/cli/features/credential-injection
 
-#### Step 2 — enable the route in your profile
-
-Open your child profile (`~/.config/nono/profile/pi.json`) and add the route name to the `credentials` array in the `network` block:
-
-```json
-"network": {
-  "block": false,
-  "allow_domain": [],
-  "credentials": ["anthropic"],
-  "open_port": [],
-  "listen_port": [],
-  "custom_credentials": {}
-}
-```
-
-You can enable multiple providers at once:
-
-```json
-"credentials": ["anthropic", "github"]
-```
+#### Step 2 — Run pi with the child profile
 
 Then run pi with your child profile:
 
 ```bash
-nono run --profile pi-agent -- pi
+nono run --profile pi -- pi
 ```
 
 ### Custom providers
@@ -329,7 +296,9 @@ Exclude noisy paths from snapshot tracking in your child profile:
 
 ## Run detached
 
-By default, nono runs pi as a child process. This means if you stop the nono session, you also stop pi and any subprocesses it spawned. If you want pi to keep running after you exit nono, use `--detached`:
+nono comes with a built-in PTY multiplexer, so you can detach and re-attach to sessions at will. Many users have this as part of their developer workflow already with tmux or screen, but if you want to keep everything in one place, nono has this capability built in.
+
+By default, nono runs pi as a child process. This means if you quit pi, any subprocesses it spawned will also be terminated. If you want pi to keep running, but not have it as an active terminal session, use `--detached`:
 
 ```bash
 nono run --profile pi --detached -- pi
