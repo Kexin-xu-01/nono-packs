@@ -59,10 +59,10 @@
         "env_var": "ANTHROPIC_API_KEY"
       },
       "gemini": {
-        "upstream": "https://generativelanguage.googleapis.com",
+        "upstream": "https://generativelanguage.googleapis.com/v1beta/openai",
         "credential_key": "GOOGLE_API_KEY",
-        "inject_header": "x-goog-api-key",
-        "credential_format": "{}",
+        "inject_header": "Authorization",
+        "credential_format": "Bearer {}",
         "env_var": "GEMINI_API_KEY"
       },
       "github": {
