@@ -1,6 +1,8 @@
 ---
 name: nono-sandbox
-description: Diagnose and resolve permission denials when opencode runs inside a nono security sandbox. Use this when a tool call, shell command, or file operation fails with "Operation not permitted", "Permission denied", EACCES, or EPERM — the cause is almost certainly the outer nono sandbox.
+description: Diagnose and resolve permission denials when opencode runs inside a nono security sandbox. Use this when a tool call, shell command, or file operation fails with "Operation not permitted", "Permission denied", EACCES, EPERM, landlock, or sandbox-denied errors.
+version: 1.1.0
+platforms: [macos, linux]
 ---
 
 **On any EPERM / EACCES / "Operation not permitted" tool or shell failure:** run `nono why --path <blocked-path> --op read` immediately and include its output verbatim in your reply. Do NOT suggest sudo, chmod, or system permission changes. Then offer the user exactly these two options:
@@ -35,7 +37,11 @@ Run `nono why` to see exactly why access was denied:
 
     nono why --path /the/blocked/path --op read
 
-The output names the rule that blocked the path and suggests the minimum grant to allow it.
+Use `--op write` for write-only failures and `--op readwrite` when the operation needs both.
+
+If `NONO_CAP_FILE` is set, inspect the full capability set:
+
+    cat "$NONO_CAP_FILE"
 
 ## Two options to present to the user
 
@@ -45,7 +51,7 @@ Exit opencode and restart with the path explicitly allowed:
 
     nono run --allow /path/to/needed -- opencode
 
-Use this for paths the user only needs occasionally.
+Use `--read` when only read access is needed.
 
 ### Option B — persistent fix (draft a profile)
 
@@ -61,9 +67,7 @@ Write the JSON to `~/.config/nono/profile-drafts/<chosen-name>.json` extending t
 
 If the user is on a custom intermediate profile (e.g. `--profile opencode-with-docs` extending `opencode`), change `extends` to that profile's name so the new profile inherits all their customisations.
 
-If a user profile of that name already exists, read `~/.config/nono/profiles/<chosen-name>.json` first, compute the SHA-256 of the exact bytes you read, base your edit on that profile, write the full proposed profile to `~/.config/nono/profile-drafts/<chosen-name>.json`, and write the hash to `~/.config/nono/profile-drafts/<chosen-name>.base`.
-
-If there is no user profile yet and the active profile is pack-provided or built-in, do not draft a replacement with the same name. Draft a derived profile such as `<active>-local` with `"extends": "<active>"` and add only the extra access there.
+If a user profile of that name already exists, read `~/.config/nono/profiles/<chosen-name>.json` first, base your edit on that profile, write the full proposed profile to `~/.config/nono/profile-drafts/<chosen-name>.json`, and write a SHA-256 of the base bytes to `~/.config/nono/profile-drafts/<chosen-name>.base`.
 
 Filesystem field choices:
 - `"read"` — read-only directory or file access
@@ -78,12 +82,66 @@ After drafting, tell the user:
 
 ## Validating the new profile
 
-`nono profile promote` shows a diff and validates before applying. If the user wants to validate the draft directly:
+`nono profile promote` shows a diff and validates before applying. If the user wants to validate directly:
 
     nono profile validate --draft <chosen-name>
+
+## Credential injection
+
+The opencode nono profile defines credential routes for common AI providers. nono injects these credentials transparently via its proxy — opencode never sees the raw API key.
+
+Built-in route names: `openai`, `anthropic`, `gemini`, `github`, `gitlab`.
+
+The corresponding keychain accounts (env-var shaped) are:
+- `OPENAI_API_KEY` → injected as `Authorization: Bearer …` to `api.openai.com`
+- `ANTHROPIC_API_KEY` → injected as `x-api-key: …` to `api.anthropic.com`
+- `GOOGLE_API_KEY` → injected as `x-goog-api-key: …` to `generativelanguage.googleapis.com`; opencode sees it as `GEMINI_API_KEY`
+- `GITHUB_TOKEN` → injected as `Authorization: token …` to `api.github.com`
+- `GITLAB_TOKEN` → injected as `Authorization: Bearer …` to `gitlab.com/api`
+
+Routes are defined in the profile but **disabled by default**. To enable one, create an extending profile and add the route name to `network.credentials`:
+
+    {
+      "extends": "opencode",
+      "meta": { "name": "opencode-with-anthropic", "version": "1.0.0" },
+      "network": { "credentials": ["anthropic"] }
+    }
+
+Do not read or write API keys directly from inside the sandbox. Prefer nono phantom credential routes. If opencode stores a key in `~/.config/opencode/`, it is visible to the sandboxed process — use the proxy route instead.
+
+## Detach and attach
+
+nono supports running opencode in a detached session that survives terminal disconnects:
+
+    nono run --profile opencode --detach -- opencode
+
+nono prints the session ID on start. Reattach from any terminal:
+
+    nono attach <session-id>
+
+The session ID is also available inside the session as `NONO_SESSION_ID`. The installed plugin surfaces it in the `nono-status` command output.
+
+To list active nono sessions:
+
+    nono sessions
+
+To stop a detached session cleanly:
+
+    nono stop <session-id>
+
+Detached sessions inherit the same sandbox profile as interactive ones — the same filesystem grants, credential routes, and network rules apply.
+
+## opencode-specific notes
+
+- opencode state, sessions, config, and cache live under `~/.opencode`, `~/.config/opencode`, `~/.cache/opencode`, `~/.local/share/opencode`, and `~/.local/state/opencode`. The base profile grants all of these read/write.
+- The plugin at `~/.config/opencode/plugins/nono-sandbox.ts` is symlinked from the pack store. It updates automatically on `nono pull`.
+- The skill at `~/.config/opencode/skills/nono-sandbox/` is similarly symlinked.
+- The `nono-status` command (registered by the plugin) shows the active capability set, enabled credential routes, and the session ID for reattach.
+- Do not add provider secrets to opencode's own config files. Route them through `network.credentials` in the profile instead.
 
 ## What you should NOT do
 
 - Do not write the profile yourself unless the user explicitly asks for Option B. Present both options first.
 - Do not edit the pack-installed profile at `~/.config/nono/packages/always-further/opencode/policy.json` — it is overwritten on every `nono pull`.
 - Do not retry the failing operation in a different way. The sandbox is OS-enforced; alternative paths or commands hit the same boundary.
+- Do not edit registry-managed package files under `~/.config/nono/packages`; create a profile extension instead.
