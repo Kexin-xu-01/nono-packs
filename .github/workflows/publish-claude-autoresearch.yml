@@ -18,6 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#claude-autoresearch-v}" >> "$GITHUB_OUTPUT"
+
       - name: Build files list from package.json
         id: files
         run: |
@@ -41,7 +45,7 @@ jobs:
           publish: "true"
           package-name: claude-autoresearch
           package-namespace: Kexin-xu-01
-          package-version: ${{ github.ref_name }}
+          package-version: ${{ steps.version.outputs.version }}
           package-path: claude-autoresearch
           registry-url: https://registry.nono.sh/api/v1
           files: ${{ steps.files.outputs.files }}
