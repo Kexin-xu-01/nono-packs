@@ -51,7 +51,17 @@ After diagnosing with `nono why`, present the user with options:
    nono run --allow /path/to/needed -- claude
    ```
 
-2. **Write a profile** - if the user needs this access regularly, offer to write a nono profile for them. If they agree, run `nono profile guide` to get the full profile schema and authoring reference, then write a profile JSON file to `~/.config/nono/profiles/<name>.json`. The user can then start sessions with `nono run --profile <name> -- claude`.
+2. **Write a profile draft** - if the user needs this access regularly, offer to draft a nono profile for them. The active profile directory `~/.config/nono/profiles/` is read-only from inside the sandbox by design, so drafts are written to `~/.config/nono/profile-drafts/` and the user promotes them out-of-band.
+
+   If the user agrees, run `nono profile guide` to get the full profile schema, then write the full profile JSON to `~/.config/nono/profile-drafts/<name>.json`.
+
+   If `~/.config/nono/profile-drafts` does not exist or cannot be written, or `nono profile promote --help` is unavailable, do not try to modify profiles directly. Tell the user to upgrade nono, then rerun the draft flow.
+
+   If a user profile of that name already exists in `~/.config/nono/profiles/<name>.json`, read it first, compute the SHA-256 of the exact bytes you read, base your edit on it, then write that hash to `~/.config/nono/profile-drafts/<name>.base`.
+
+   If there is no user profile yet and the current profile is pack-provided or built-in, do not draft a replacement with the same name. Draft a derived profile such as `<active>-local` with `"extends": "<active>"` and add only the extra access there.
+
+   Tell the user: `Drafted <name>. Run \`nono profile promote <name>\` to review and apply, then start sessions with \`nono run --profile <name> -- claude\`.`
 
 ## Checking what is allowed
 

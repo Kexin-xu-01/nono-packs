@@ -17,6 +17,7 @@ Current packs in this repository include:
 
 - [`claude`](./claude): Claude Code integration for working inside the `nono` sandbox
 - [`codex`](./codex): Codex integration for working inside the `nono` sandbox
+- [`pi`](./pi): Pi Coding Agent package and profile for working inside the `nono` sandbox
 
 Typical pack contents:
 

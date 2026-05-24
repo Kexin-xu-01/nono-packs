@@ -1,7 +1,7 @@
-name: Publish codex pack
+name: Publish openclaw pack
 on:
   push:
-    tags: ["codex-v*"]
+    tags: ["openclaw-v*"]
   workflow_dispatch:
 
 # Inlined (rather than calling a reusable _publish.yml) so the OIDC
@@ -22,9 +22,9 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          VERSION=$(jq -r '.version' codex/package.json)
+          VERSION=$(jq -r '.version' openclaw/package.json)
           if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
-            echo "ERROR: codex/package.json is missing a 'version' field"
+            echo "ERROR: openclaw/package.json is missing a 'version' field"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -38,8 +38,8 @@ jobs:
           # `artifacts[].path` so the manifest is the source of truth.
           {
             echo "package.json"
-            [ -f "codex/README.md" ] && echo "README.md"
-            jq -r '.artifacts[].path' "codex/package.json"
+            [ -f "openclaw/README.md" ] && echo "README.md"
+            jq -r '.artifacts[].path' "openclaw/package.json"
           } | sort -u > /tmp/files.txt
           {
             echo "files<<EOF"
@@ -50,9 +50,9 @@ jobs:
       - uses: always-further/agent-sign@c9426f1a00f823dd53e7b9068d910a68b43e49e9 # v0.0.11
         with:
           publish: "true"
-          package-name: codex
+          package-name: openclaw
           package-namespace: always-further
           package-version: ${{ steps.version.outputs.version }}
-          package-path: codex
+          package-path: openclaw
           registry-url: https://registry.nono.sh/api/v1
           files: ${{ steps.files.outputs.files }}

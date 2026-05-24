@@ -6,8 +6,8 @@
     "description": "OpenAI Codex CLI agent (registry-managed)",
     "author": "always-further"
   },
-  "security": {
-    "groups": [
+  "groups": {
+    "include": [
       "codex_macos",
       "user_caches_macos",
       "node_runtime",
@@ -17,7 +17,9 @@
       "nix_runtime",
       "git_config",
       "unlink_protection"
-    ],
+    ]
+  },
+  "security": {
     "signal_mode": "isolated",
     "capability_elevation": false
   },
@@ -25,10 +27,11 @@
     "allow": [
       "$HOME/.codex",
       "$HOME/.agents",
-      "$HOME/.config/nono/profiles"
+      "$HOME/.config/nono/profile-drafts"
     ],
     "read": [
-      "$HOME/.config/nono/packages"
+      "$HOME/.config/nono/packages",
+      "$HOME/.config/nono/profiles"
     ]
   },
   "network": { "block": false },

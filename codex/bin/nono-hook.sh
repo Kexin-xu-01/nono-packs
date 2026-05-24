@@ -1,6 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # nono-hook.sh - Codex PostToolUse hook for nono sandbox diagnostics
-# Version: 1.4.0
+# Version: 1.5.0
+#
+# Behavioural change in 1.5.0: Option B now writes the proposed
+# profile to ~/.config/nono/profile-drafts/ (the only writable
+# nono-config surface from inside the sandbox) and instructs the
+# user to run `nono profile promote <name>` to review and apply.
+# Previously the model was told to write directly into
+# ~/.config/nono/profiles/, which is now read-only from inside the
+# sandbox.
 #
 # Behavioural change in 1.4.0: path extraction now also looks at
 # tool_input and accepts tilde-prefixed paths (`~/test.txt`), not
@@ -113,22 +121,40 @@ Offer the user TWO choices (A or B). Wait for their answer.
 
 If user picks A: print that command. Stop.
 
-If user picks B: write the file using your file-write tool to
-~/.config/nono/profiles/${DEFAULT_PROFILE_NAME}.json with EXACTLY
-these contents (the profile name is already filled in — do NOT
-substitute placeholders, just write what is below):
+If user picks B and ~/.config/nono/profile-drafts does not exist or
+cannot be written, or \`nono profile promote --help\` is unavailable:
+do not try to modify ~/.config/nono/profiles directly. Tell the user
+to upgrade nono, then rerun the draft flow. Stop.
+
+If user picks B and ~/.config/nono/profiles/${DEFAULT_PROFILE_NAME}.json already exists:
+read that profile, compute the SHA-256 of the exact bytes you read,
+merge the new path into the smallest appropriate filesystem field,
+write the full proposed profile to
+~/.config/nono/profile-drafts/${DEFAULT_PROFILE_NAME}.json, and write
+the hash to ~/.config/nono/profile-drafts/${DEFAULT_PROFILE_NAME}.base.
+
+If user picks B and that user profile does not exist: write the file
+using your file-write tool to
+~/.config/nono/profile-drafts/${DEFAULT_PROFILE_NAME}.json with
+EXACTLY these contents (the profile name is already filled in — do
+NOT substitute placeholders, just write what is below):
 {
   \"extends\": \"$PACK_PROFILE\",
   \"meta\": { \"name\": \"$DEFAULT_PROFILE_NAME\", \"version\": \"1.0.0\" },
   \"filesystem\": { \"read\": [\"$DISPLAY_PATH\"] }
 }
 
+The profiles/ directory is read-only from inside the sandbox by
+design; drafts/ is the writable surface and the user promotes
+out-of-band.
+
 After writing, tell the user:
-  Created. Restart codex with:
+  Drafted $DEFAULT_PROFILE_NAME. Run \`nono profile promote $DEFAULT_PROFILE_NAME\`
+  to review and apply, then restart codex with:
     nono run --profile $DEFAULT_PROFILE_NAME -- codex
 
 Stop after either option. Do not retry the blocked tool call — the
-user has to restart for the new profile to take effect.
+user has to promote and restart for the new profile to take effect.
 
 Notes:
   - Use 'read' for view-only; 'write' for modify-only; 'allow' for r+w.
