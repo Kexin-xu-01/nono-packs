@@ -37,7 +37,8 @@
       "type": "json_array_append",
       "file": "$HOME/.copilot/config.json",
       "path": "extraKnownMarketplaces",
-      "patch_entries": "wiring/enabled-plugin.json"
+      "patch_entries": "wiring/enabled-plugin.json",
+      "key_field": "name"
     }
 
   ]
