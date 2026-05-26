@@ -9,8 +9,8 @@
   "groups": {
     "include": [
       "node_runtime",
-      "linux_runtime_state",
-      "linux_sysfs_read",
+      { "name": "linux_runtime_state", "when": "linux" },
+      { "name": "linux_sysfs_read", "when": "linux" },
       "git_config"
     ]
   },

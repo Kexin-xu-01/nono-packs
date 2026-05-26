@@ -8,16 +8,16 @@
   },
   "groups": {
     "include": [
-      "claude_code_macos",
-      "claude_code_linux",
-      "user_caches_macos",
-      "claude_cache_linux",
+      { "name": "claude_code_macos", "when": "macos" },
+      { "name": "claude_code_linux", "when": "linux" },
+      { "name": "user_caches_macos", "when": "macos" },
+      { "name": "claude_cache_linux", "when": "linux" },
       "node_runtime",
       "rust_runtime",
       "python_runtime",
-      "vscode_macos",
-      "vscode_linux",
-      "linux_sysfs_read",
+      { "name": "vscode_macos", "when": "macos" },
+      { "name": "vscode_linux", "when": "linux" },
+      { "name": "linux_sysfs_read", "when": "linux" },
       "nix_runtime",
       "git_config",
       "unlink_protection"
