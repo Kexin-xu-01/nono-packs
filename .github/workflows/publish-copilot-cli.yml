@@ -1,7 +1,7 @@
 name: Publish copilot-cli pack
 on:
   push:
-    tags: ["copilot-cli-v*"]
+    tags: ["copilotcli-v*"]
   workflow_dispatch:
 
 # Inlined (rather than calling a reusable _publish.yml) so the OIDC
