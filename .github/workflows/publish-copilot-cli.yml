@@ -29,12 +29,27 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Build files list from package.json
+        id: files
+        run: |
+          set -euo pipefail
+          {
+            echo "package.json"
+            [ -f "copilot-cli/README.md" ] && echo "README.md"
+            jq -r '.artifacts[].path' "copilot-cli/package.json"
+          } | sort -u > /tmp/files.txt
+          {
+            echo "files<<EOF"
+            cat /tmp/files.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - uses: always-further/agent-sign@c9426f1a00f823dd53e7b9068d910a68b43e49e9 # v0.0.11
         with:
           publish: "true"
           package-name: copilot-cli
           package-namespace: always-further
-          package-version: ${{ github.ref_name }}
+          package-version: ${{ steps.version.outputs.version }}
           package-path: copilot-cli
           registry-url: https://registry.nono.sh/api/v1
           files: ${{ steps.files.outputs.files }}
