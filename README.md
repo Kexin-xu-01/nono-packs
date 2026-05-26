@@ -51,6 +51,49 @@ Each pack should define:
 
 The exact artifact set depends on the target runtime. For example, a Claude-oriented pack can include Claude plugin metadata, hook definitions, and sandbox-awareness skills.
 
+## Local Development
+
+Use `scripts/dev-install.sh` to install, update, or remove a pack directly from your local checkout without publishing to the registry. This is the primary workflow for testing changes before release.
+
+```
+scripts/dev-install.sh <command> <pack> [--namespace <ns>] [--dry-run]
+```
+
+**Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `install` | Apply all wiring from `<pack>/package.json` |
+| `update` | Re-apply wiring (idempotent; safe to run after content changes) |
+| `remove` | Undo all wiring from `<pack>/package.json` |
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--namespace <ns>` | `always-further` | Value substituted for `$NS` in wiring paths |
+| `--dry-run` | — | Print every action without touching the filesystem |
+
+**Examples:**
+
+```bash
+# Install the claude pack locally
+scripts/dev-install.sh install claude
+
+# Preview what remove would do without making changes
+scripts/dev-install.sh remove codex --dry-run
+
+# Re-apply after editing wiring files
+scripts/dev-install.sh update copilot-cli
+
+# Install under a custom namespace
+scripts/dev-install.sh install openclaw --namespace my-fork
+```
+
+The script reads `package.json` from the pack directory, expands the variables `$HOME`, `$PACK_DIR`, `$NS`, and `$NOW`, then applies each entry in the `wiring` array. All six wiring types are supported: `symlink`, `write_file`, `json_merge`, `json_array_append`, `toml_block`, and `yaml_merge`. The `remove` command processes entries in reverse order and undoes each operation cleanly.
+
+`yaml_merge` requires PyYAML (`pip install pyyaml`). All other operations use the Python 3 standard library.
+
 ## Current Status
 
 This repository is intended to host multiple packs, packages, and skills for the wider `nono` registry. The [`claude`](./claude) pack is the initial example and documents the expected structure for future additions.
