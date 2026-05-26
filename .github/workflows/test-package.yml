@@ -3,24 +3,24 @@ name: Test package
 on:
   workflow_dispatch:
     inputs:
-      package-name:
+      package_name:
         description: Package name to publish.
         required: true
         type: string
-      package-path:
+      package_path:
         description: Package directory path. Defaults to package-name.
         required: false
         type: string
-      package-version:
+      package_version:
         description: Package version to publish.
         required: true
         type: string
-      package-namespace:
+      package_namespace:
         description: Package namespace to publish under.
         required: false
         default: always-further
         type: string
-      registry-url:
+      registry_url:
         description: Test registry API URL.
         required: false
         default: https://lukehinds.rat.alwaysfurther.us/api/v1
@@ -42,8 +42,8 @@ jobs:
 
       - uses: ./.github/actions/build-test-package
         with:
-          package-name: ${{ inputs.package-name }}
-          package-version: ${{ inputs.package-version }}
-          package-path: ${{ inputs.package-path || inputs.package-name }}
-          package-namespace: ${{ inputs.package-namespace }}
-          registry-url: ${{ inputs.registry-url }}
+          package-name: ${{ inputs.package_name }}
+          package-version: ${{ inputs.package_version }}
+          package-path: ${{ inputs.package_path || inputs.package_name }}
+          package-namespace: ${{ inputs.package_namespace }}
+          registry-url: ${{ inputs.registry_url }}

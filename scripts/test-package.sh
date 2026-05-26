@@ -75,11 +75,11 @@ REGISTRY_URL="$(prompt "Registry URL" "https://lukehinds.rat.alwaysfurther.us/ap
 
 COMMAND=(
   gh workflow run test-package.yml
-  -f "package-name=$PACKAGE_NAME"
-  -f "package-path=$PACKAGE_PATH"
-  -f "package-version=$PACKAGE_VERSION"
-  -f "package-namespace=$PACKAGE_NAMESPACE"
-  -f "registry-url=$REGISTRY_URL"
+  -f "package_name=$PACKAGE_NAME"
+  -f "package_path=$PACKAGE_PATH"
+  -f "package_version=$PACKAGE_VERSION"
+  -f "package_namespace=$PACKAGE_NAMESPACE"
+  -f "registry_url=$REGISTRY_URL"
 )
 
 cat <<EOF
