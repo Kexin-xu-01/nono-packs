@@ -22,7 +22,20 @@
       "$HOME/.cache/copilot/"
     ],
     "read": [
-      "$HOME/.config/gh"
+      "$HOME/.config/gh",
+      "$HOME/.agents/skills"
+    ],
+    "read_file": [
+      "$HOME/Library/Application Support/Code/User/keybindings.json",
+      "$HOME/Library/Application Support/Microsoft/DeveloperTools/deviceid"
     ]
-  }
+  },
+  "open_urls": {
+    "allow_origins": ["https://github.com"],
+    "allow_localhost": true
+  },
+  "allow_launch_services": true,
+  "unsafe_macos_seatbelt_rules": [
+    "(allow user-preference-read)"
+  ]
 }

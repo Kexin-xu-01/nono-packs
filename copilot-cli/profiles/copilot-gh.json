@@ -12,8 +12,14 @@
     ]
   },
   "filesystem": {
-    "allow_file": [
+    "write": [
+      "$HOME/Library/Keychains"
+    ],
+    "read_file": [
       "$HOME/Library/Keychains/login.keychain-db"
+    ],
+    "bypass_protection": [
+      "$HOME/Library/Keychains"
     ],
     "read": [
       "/usr/local/etc/gitconfig"
