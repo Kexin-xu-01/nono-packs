@@ -138,6 +138,28 @@ if (( ! DRY_RUN )); then
   esac
 fi
 
+# Bump version in package.json and commit before tagging.
+CURRENT_VERSION="$(python3 -c "import json,sys; print(json.load(open('$PACK_DIR/package.json'))['version'])")"
+if [[ "$CURRENT_VERSION" != "$VERSION" ]]; then
+  if (( DRY_RUN )); then
+    echo "[dry-run] bump $PACK/package.json version: $CURRENT_VERSION -> $VERSION"
+    echo "[dry-run] git add $PACK/package.json"
+    echo "[dry-run] git commit -m \"chore($PACK): bump version to $VERSION\""
+  else
+    python3 - <<PYEOF
+import json, pathlib
+p = pathlib.Path("$PACK_DIR/package.json")
+data = json.loads(p.read_text())
+data["version"] = "$VERSION"
+p.write_text(json.dumps(data, indent=2) + "\n")
+PYEOF
+    echo "+ bumped $PACK/package.json: $CURRENT_VERSION -> $VERSION"
+    git add "$PACK_DIR/package.json"
+    git commit -m "chore($PACK): bump version to $VERSION"
+    git push origin "$CURRENT_BRANCH"
+  fi
+fi
+
 run git tag -a "$TAG" -m "Release $TAG"
 run git push origin "$TAG"
 
