@@ -33,7 +33,7 @@
       "$HOME/.cache/claude",
       "$HOME/.config/nono/profile-drafts",
       "/tmp/claude-$UID",
-      "$HOME/Library/Keychains"
+      { "path": "$HOME/Library/Keychains", "when": "macos" }
     ],
     "read": [
       "$HOME/.config/nono/packages",
@@ -44,7 +44,9 @@
       "$HOME/.claude.json.lock",
       "$HOME/.claude.lock"
     ],
-    "bypass_protection": ["$HOME/Library/Keychains"]
+    "bypass_protection": [
+      { "path": "$HOME/Library/Keychains", "when": "macos" }
+    ]
   },
   "network": { "block": false },
   "workdir": { "access": "readwrite" },
