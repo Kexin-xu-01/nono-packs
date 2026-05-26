@@ -7,7 +7,7 @@
   "platforms": ["macos"],
   "min_nono_version": "0.58.0",
   "artifacts": [
-    { "type": "profile", "path": "profiles/copilot-base.json", "install_as": "copilot-cli-base" },
+    { "type": "profile", "path": "profiles/copilot-base.json", "install_as": "copilot-base" },
     { "type": "profile", "path": "profiles/copilot-gh.json", "install_as": "copilot-cli" },
     { "type": "profile", "path": "profiles/copilot-proxy.json", "install_as": "copilot-cli-proxy" },
     { "type": "plugin", "path": "README.md" },
