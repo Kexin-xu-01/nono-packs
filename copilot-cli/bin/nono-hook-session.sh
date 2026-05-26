@@ -1,6 +1,6 @@
 #!/bin/bash
 # nono-hook-session.sh — GitHub Copilot CLI SessionStart hook
-# Version: 1.0.0
+# Version: 0.1.0
 #
 # Brief boundary statement at session start. Reads context from
 # ../context/session.txt and injects it into the session.
@@ -9,7 +9,7 @@
 # Output schema: { hookSpecificOutput: { hookEventName, additionalContext } }
 # NOTE: output schema needs verification against Copilot CLI hook runtime.
 # See NOTES.md for details.
-NONO_HOOK_DEBUG=1
+NONO_HOOK_DEBUG=-
 LOG_FILE="${NONO_HOOK_LOG:-$HOME/.copilot/nono-hook.log}"
 log() { [ "${NONO_HOOK_DEBUG:-0}" = "1" ] && echo "$(date -Iseconds) [nono-hook-session] $*" >> "$LOG_FILE"; }
 

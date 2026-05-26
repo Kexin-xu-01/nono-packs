@@ -1,6 +1,6 @@
 #!/bin/bash
 # nono-hook-bash.sh — PostToolUse hook for Copilot CLI bash tool
-# Version: 1.0.0
+# Version: 0.1.0
 #
 # Fires on PostToolUse for all tools. Filters to bash tool only, then
 # inspects the tool result for sandbox-denial patterns. Reads context
@@ -11,7 +11,7 @@
 # Output schema: { hookSpecificOutput: { hookEventName, additionalContext } }
 # NOTE: output schema needs verification against Copilot CLI hook runtime.
 # See NOTES.md for details.
-NONO_HOOK_DEBUG=1
+NONO_HOOK_DEBUG=0
 LOG_FILE="${NONO_HOOK_LOG:-$HOME/.copilot/nono-hook.log}"
 log() { [ "${NONO_HOOK_DEBUG:-0}" = "1" ] && echo "$(date -Iseconds) [nono-hook-bash] $*" >> "$LOG_FILE"; }
 

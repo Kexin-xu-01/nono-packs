@@ -1,6 +1,6 @@
 #!/bin/bash
 # nono-hook.sh — GitHub Copilot CLI nono sandbox diagnostics hook
-# Version: 1.0.0
+# Version: 0.1.0
 #
 # Fires on PostToolUseFailure. Reads context from ../context/denial.txt,
 # substitutes live capability data, and injects it so the agent understands
