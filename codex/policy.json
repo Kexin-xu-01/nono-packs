@@ -8,12 +8,13 @@
   },
   "groups": {
     "include": [
-      "codex_macos",
-      "user_caches_macos",
+      { "name": "codex_macos", "when": "macos" },
+      { "name": "user_caches_macos", "when": "macos" },
+      { "name": "user_caches_linux", "when": "linux" },
       "node_runtime",
       "rust_runtime",
       "python_runtime",
-      "linux_sysfs_read",
+      { "name": "linux_sysfs_read", "when": "linux" },
       "nix_runtime",
       "git_config",
       "unlink_protection"

@@ -11,9 +11,9 @@
       "node_runtime",
       "rust_runtime",
       "python_runtime",
-      "user_caches_macos",
-      "user_caches_linux",
-      "linux_sysfs_read",
+      { "name": "user_caches_macos", "when": "macos" },
+      { "name": "user_caches_linux", "when": "linux" },
+      { "name": "linux_sysfs_read", "when": "linux" },
       "nix_runtime",
       "git_config",
       "unlink_protection"
