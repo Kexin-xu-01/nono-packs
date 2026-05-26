@@ -5,7 +5,7 @@ description: Understands nono security sandbox constraints for GitHub Copilot CL
 
 # Working inside a nono sandbox
 
-The user has launched you with `nono run --profile copilot-cli -- copilot`. nono enforces filesystem and network limits at the OS level (Landlock on Linux, Seatbelt on macOS). Approval flows inside Copilot cannot grant access that nono hasn't already permitted.
+The user has launched you with `nono run --profile <profile> -- copilot`. nono enforces filesystem and network limits at the OS level (Landlock on Linux, Seatbelt on macOS). Approval flows inside Copilot cannot grant access that nono hasn't already permitted.
 
 ## Identifying a sandbox denial
 
@@ -25,14 +25,16 @@ When you see any of these on a `bash`, `view`, `edit`, or `create` tool failure,
 
 ## What the sandbox allows
 
-Your active profile (`copilot-cli`) grants access to:
+Allowed paths vary by profile. For the exact capability list of the active session, read `NONO_CAP_FILE`:
 
-- **Working directory**: full read+write access to the directory from which `copilot` was launched
-- **Copilot config**: `~/.copilot/` — readwrite
-- **Copilot cache**: `~/Library/Caches/copilot/` — readwrite (macOS)
-- **gh CLI config**: `~/.config/gh/` — read-only (for GitHub auth context)
+```bash
+cat "$NONO_CAP_FILE" | jq .
+```
+
+Invariants across all profiles:
+
+- **Working directory**: full read+write from the directory `copilot` was launched in
 - **Network**: allowed — unrestricted outbound
-- **GitHub token**: injected automatically from the OS keychain under credential key `copilot_github_token`
 
 Everything else is blocked at the kernel level. There is no escalation path from inside the sandbox.
 
@@ -64,7 +66,7 @@ Save a JSON file at `~/.config/nono/profiles/<chosen-name>.json` extending the a
 
 ```json
 {
-  "extends": "copilot-cli",
+  "extends": "<active-profile>",
   "meta": { "name": "<chosen-name>", "version": "1.0.0" },
   "filesystem": { "read": ["/path/to/needed"] }
 }
@@ -85,13 +87,7 @@ nono run --profile <chosen-name> -- copilot
 
 ## Checking current capabilities
 
-If `NONO_CAP_FILE` is set, it points to a JSON file listing exactly what this sandbox can access:
-
-```bash
-cat "$NONO_CAP_FILE" | jq .
-```
-
-Fields:
+`NONO_CAP_FILE` fields:
 - `fs`: array of filesystem capabilities (`path`, `resolved`, `access`)
 - `net_blocked`: `true` if network is blocked
 
@@ -104,4 +100,4 @@ For load-bearing writes (config that must live at a specific path, credentials, 
 ## What you should NOT do
 
 - Do not retry the failing operation in a different way. The sandbox is OS-enforced; alternative paths hit the same boundary.
-- Do not edit the pack-installed profile at `~/.config/nono/packages/always-further/copilot-cli/policy.json` — it is overwritten on every `nono pull`.
+- Do not edit the pack-installed profiles at `~/.config/nono/packages/always-further/copilot-cli/profiles/` — they are overwritten on every `nono pull`.

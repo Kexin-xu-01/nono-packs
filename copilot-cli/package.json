@@ -6,7 +6,10 @@
   "platforms": ["macos"],
   "min_nono_version": "0.44.0",
   "artifacts": [
-    { "type": "profile", "path": "policy.json", "install_as": "copilot-cli" },
+    { "type": "profile", "path": "profiles/copilot-base.json", "install_as": "copilot-cli-base" },
+    { "type": "profile", "path": "profiles/copilot-gh.json", "install_as": "copilot-cli" },
+    { "type": "profile", "path": "profiles/copilot-proxy.json", "install_as": "copilot-cli-proxy" },
+    { "type": "plugin", "path": "README.md" },
     { "type": "plugin", "path": "plugin.json" },
     { "type": "plugin", "path": "hooks/hooks.json" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
