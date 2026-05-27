@@ -37,7 +37,14 @@
     ],
     "read": [
       "$HOME/.config/nono/packages",
-      "$HOME/.config/nono/profiles"
+      "$HOME/.config/nono/profiles",
+      "$HOME/.agents"
+    ],
+    "read_file": [
+      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
+    ],
+    "bypass_protection": [
+      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
     ],
     "suppress_save_prompt": [
       "~/.config/nono/packages/always-further/opencode"
