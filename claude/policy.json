@@ -51,7 +51,7 @@
   "network": { "block": false },
   "workdir": { "access": "readwrite" },
   "open_urls": {
-    "allow_origins": ["https://claude.ai"],
+    "allow_origins": ["https://claude.ai", "https://claude.com,", "https://api.anthropic.com"],
     "allow_localhost": true
   },
   "allow_launch_services": true,
