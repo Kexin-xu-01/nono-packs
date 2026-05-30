@@ -30,6 +30,7 @@
   "filesystem": {
     "allow": [
       "$HOME/.claude",
+      "$HOME/.local/state/claude/locks",
       "$HOME/.cache/claude",
       "$HOME/.config/nono/profile-drafts",
       "/tmp/claude-$UID",
