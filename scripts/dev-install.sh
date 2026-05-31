@@ -34,6 +34,10 @@ Commands:
 Options:
   --namespace <ns>   Value for $NS variable (default: always-further)
   --dry-run          Print actions; make no changes
+
+Profiles:
+  Local profile artifacts are installed as <install_as>-dev, e.g.
+  `codex` becomes `codex-dev`.
 USAGE
   exit 2
 }
@@ -51,6 +55,7 @@ esac
 
 NS="always-further"
 DRY_RUN=0
+PROFILE_SUFFIX="-dev"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --namespace)   NS="${2:?--namespace requires a value}"; shift ;;
@@ -300,6 +305,54 @@ with open(target_path, 'w') as f:
 PYEOF
 }
 
+py_local_shell_scripts_via_bash() {
+  # Local dev installs may point agent hook commands at scripts in this
+  # checkout. A nono profile can allow reading the checkout while denying
+  # direct process-exec from it, so wrap local .sh command fields with
+  # `/bin/bash <script>` and leave package wiring untouched.
+  local entries_content="$1"
+  python3 - "$entries_content" "$PACK_DIR" <<'PYEOF'
+import json, shlex, sys
+
+entries_str = sys.argv[1]
+entries = json.loads(entries_str)
+pack_dir = sys.argv[2].rstrip("/")
+
+def rewrite_value(value):
+    if isinstance(value, list):
+        return [rewrite_value(item) for item in value]
+    if isinstance(value, dict):
+        rewritten = {}
+        for key, item in value.items():
+            if key in {"command", "bash"}:
+                rewritten[key] = rewrite_command(item)
+            else:
+                rewritten[key] = rewrite_value(item)
+        return rewritten
+    return value
+
+def rewrite_command(command):
+    if not isinstance(command, str):
+        return command
+    if command.startswith(("/bin/bash ", "bash ")):
+        return command
+    if command.startswith(pack_dir + "/") and command.endswith(".sh"):
+        return "/bin/bash " + shlex.quote(command)
+    return command
+
+rewritten = rewrite_value(entries)
+if rewritten == entries:
+    print(entries_str)
+else:
+    print(json.dumps(rewritten))
+PYEOF
+}
+
+maybe_wrap_local_shell_scripts() {
+  local entries_content="$1"
+  py_local_shell_scripts_via_bash "$entries_content"
+}
+
 py_toml_block_apply() {
   # Remove any existing marked block, then append the new one.
   local target_file="$1" marker_id="$2" block_content="$3"
@@ -466,6 +519,67 @@ with open(target_path, 'w') as f:
 PYEOF
 }
 
+py_write_dev_profile() {
+  # Write a dev-named profile copy. Top-level `extends` values that point at
+  # another profile artifact in the same pack are rewritten to that artifact's
+  # dev name, so multi-profile packs stay self-contained in local installs.
+  local src_path="$1" dest_path="$2" dev_name="$3" pkg_file="$4"
+  python3 - "$src_path" "$dest_path" "$dev_name" "$pkg_file" "$PROFILE_SUFFIX" <<'PYEOF'
+import json, os, sys
+
+src_path, dest_path, dev_name, pkg_file, suffix = sys.argv[1:]
+
+with open(src_path) as f:
+    profile = json.load(f)
+
+with open(pkg_file) as f:
+    package = json.load(f)
+
+profiles = [
+    artifact
+    for artifact in package.get("artifacts", [])
+    if artifact.get("type") == "profile"
+]
+
+name_map = {}
+for artifact in profiles:
+    install_as = artifact.get("install_as")
+    if install_as:
+        name_map[install_as] = f"{install_as}{suffix}"
+    for alias in artifact.get("aliases", []):
+        name_map[alias] = f"{alias}{suffix}"
+
+if isinstance(profile.get("extends"), str) and profile["extends"] in name_map:
+    profile["extends"] = name_map[profile["extends"]]
+
+meta = profile.get("meta")
+if isinstance(meta, dict):
+    meta["name"] = dev_name
+else:
+    profile["meta"] = {"name": dev_name}
+
+os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+with open(dest_path, "w") as f:
+    json.dump(profile, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
+remove_legacy_profile_symlink() {
+  # Older dev-install versions wrote the registry profile name directly as a
+  # symlink to the checkout. Remove only that exact legacy shape so registry or
+  # user-managed profiles are not touched.
+  local legacy_path="$1" src_path="$2"
+  if [[ -L "$legacy_path" ]]; then
+    local target
+    target="$(readlink "$legacy_path")"
+    if [[ "$target" == "$src_path" ]]; then
+      log "rm legacy profile  $legacy_path"
+      rm -f "$legacy_path"
+    fi
+  fi
+}
+
 # ── Per-type install handlers ────────────────────────────────────────────────
 
 do_symlink() {
@@ -539,32 +653,40 @@ undo_json_merge() {
 
 do_json_array_append() {
   local entry="$1"
-  local file dot_path patch_entries key_field entries_path entries_content
+  local file dot_path patch_entries key_field entries_path entries_content raw_entries_content
   file="$(jfield_expand "$entry" "file")"
   dot_path="$(jfield "$entry" "path")"
   patch_entries="$(jfield "$entry" "patch_entries")"
   key_field="$(jfield "$entry" "key_field")"
   entries_path="$PACK_DIR/$patch_entries"
-  entries_content="$(read_and_expand "$entries_path")"
+  raw_entries_content="$(read_and_expand "$entries_path")"
+  entries_content="$(maybe_wrap_local_shell_scripts "$raw_entries_content")"
   log "json_array_append  $patch_entries -> $file[$dot_path]"
   if (( ! DRY_RUN )); then
     mkdir -p "$(dirname "$file")"
+    if [[ "$entries_content" != "$raw_entries_content" ]]; then
+      py_json_array_remove "$file" "$dot_path" "$raw_entries_content" "$key_field"
+    fi
     py_json_array_append "$file" "$dot_path" "$entries_content" "$key_field"
   fi
 }
 
 undo_json_array_append() {
   local entry="$1"
-  local file dot_path patch_entries key_field entries_path entries_content
+  local file dot_path patch_entries key_field entries_path entries_content raw_entries_content
   file="$(jfield_expand "$entry" "file")"
   dot_path="$(jfield "$entry" "path")"
   patch_entries="$(jfield "$entry" "patch_entries")"
   key_field="$(jfield "$entry" "key_field")"
   entries_path="$PACK_DIR/$patch_entries"
-  entries_content="$(read_and_expand "$entries_path")"
+  raw_entries_content="$(read_and_expand "$entries_path")"
+  entries_content="$(maybe_wrap_local_shell_scripts "$raw_entries_content")"
   log "json_array_remove  $patch_entries from $file[$dot_path]"
   if (( ! DRY_RUN )); then
     py_json_array_remove "$file" "$dot_path" "$entries_content" "$key_field"
+    if [[ "$entries_content" != "$raw_entries_content" ]]; then
+      py_json_array_remove "$file" "$dot_path" "$raw_entries_content" "$key_field"
+    fi
   fi
 }
 
@@ -691,9 +813,10 @@ print(json.dumps(d['wiring'][int(sys.argv[2])]))
 
 # ── Profile artifact handling ────────────────────────────────────────────────
 #
-# Artifacts with type "profile" are installed as symlinks into
-# $NONO_PROFILES_DIR/<install_as>.json so `nono run --profile <name>` works.
-# The optional "aliases" array creates additional symlinks to the same file.
+# Artifacts with type "profile" are installed as generated dev copies in
+# $NONO_PROFILES_DIR/<install_as>-dev.json so `nono run --profile <name>-dev`
+# works without shadowing registry-installed profile names. The optional
+# "aliases" array creates additional dev-name copies of the same profile.
 
 apply_profiles() {
   local action="$1"   # "install" or "remove"
@@ -715,23 +838,29 @@ print(json.dumps(profiles))
   fi
 
   for (( i=0; i<count; i++ )); do
-    local artifact install_as src_path dest_path
+    local artifact install_as dev_install_as src_path dest_path legacy_path
     artifact="$(python3 -c "import json,sys; print(json.dumps(json.loads(sys.argv[1])[int(sys.argv[2])]))" "$entries" "$i")"
     install_as="$(python3 -c "import json,sys; print(json.loads(sys.argv[1]).get('install_as',''))" "$artifact")"
+    dev_install_as="${install_as}${PROFILE_SUFFIX}"
     local rel_path
     rel_path="$(python3 -c "import json,sys; print(json.loads(sys.argv[1]).get('path',''))" "$artifact")"
     src_path="$PACK_DIR/$rel_path"
-    dest_path="$NONO_PROFILES_DIR/$install_as.json"
+    dest_path="$NONO_PROFILES_DIR/$dev_install_as.json"
+    legacy_path="$NONO_PROFILES_DIR/$install_as.json"
 
     if [[ "$action" == "install" ]]; then
       log "profile  $rel_path -> $dest_path"
       if (( ! DRY_RUN )); then
         mkdir -p "$NONO_PROFILES_DIR"
-        ln -snf "$src_path" "$dest_path"
+        py_write_dev_profile "$src_path" "$dest_path" "$dev_install_as" "$pkg_file"
+        remove_legacy_profile_symlink "$legacy_path" "$src_path"
       fi
     else
       log "rm profile  $dest_path"
       doit rm -f "$dest_path"
+      if (( ! DRY_RUN )); then
+        remove_legacy_profile_symlink "$legacy_path" "$src_path"
+      fi
     fi
 
     # Handle aliases
@@ -745,18 +874,60 @@ for a in d.get('aliases', []):
 
     while IFS= read -r alias; do
       [[ -z "$alias" ]] && continue
-      local alias_path="$NONO_PROFILES_DIR/$alias.json"
+      local dev_alias alias_path legacy_alias_path
+      dev_alias="${alias}${PROFILE_SUFFIX}"
+      alias_path="$NONO_PROFILES_DIR/$dev_alias.json"
+      legacy_alias_path="$NONO_PROFILES_DIR/$alias.json"
       if [[ "$action" == "install" ]]; then
-        log "profile alias  $alias -> $alias_path"
+        log "profile alias  $dev_alias -> $alias_path"
         if (( ! DRY_RUN )); then
-          ln -snf "$src_path" "$alias_path"
+          py_write_dev_profile "$src_path" "$alias_path" "$dev_alias" "$pkg_file"
+          remove_legacy_profile_symlink "$legacy_alias_path" "$src_path"
         fi
       else
         log "rm profile alias  $alias_path"
         doit rm -f "$alias_path"
+        if (( ! DRY_RUN )); then
+          remove_legacy_profile_symlink "$legacy_alias_path" "$src_path"
+        fi
       fi
     done <<< "$aliases"
   done
+}
+
+print_profile_hint() {
+  local pkg_file="$PACK_DIR/package.json"
+  local profiles
+  profiles="$(python3 - "$pkg_file" "$PROFILE_SUFFIX" <<'PYEOF'
+import json, sys
+
+pkg_file, suffix = sys.argv[1:]
+with open(pkg_file) as f:
+    package = json.load(f)
+
+names = []
+for artifact in package.get("artifacts", []):
+    if artifact.get("type") != "profile":
+        continue
+    install_as = artifact.get("install_as")
+    if install_as:
+        names.append(f"{install_as}{suffix}")
+    for alias in artifact.get("aliases", []):
+        names.append(f"{alias}{suffix}")
+
+for name in names:
+    print(name)
+PYEOF
+)"
+
+  [[ -n "$profiles" ]] || return 0
+
+  info ""
+  info "To use this locally installed pack, run your nono commands with one of these profiles:"
+  while IFS= read -r profile; do
+    [[ -z "$profile" ]] && continue
+    info " nono run --profile $profile [...]"
+  done <<< "$profiles"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -777,6 +948,7 @@ case "$CMD" in
     apply_wiring "install"
     info ""
     info "Done — $PACK_NAME v$PACK_VER installed from local source."
+    print_profile_hint
     ;;
   remove)
     info "Removing wiring (reverse order)..."
