@@ -92,6 +92,8 @@ scripts/dev-install.sh install openclaw --namespace my-fork
 
 The script reads `package.json` from the pack directory, expands the variables `$HOME`, `$PACK_DIR`, `$NS`, and `$NOW`, then applies each entry in the `wiring` array. All six wiring types are supported: `symlink`, `write_file`, `json_merge`, `json_array_append`, `toml_block`, and `yaml_merge`. The `remove` command processes entries in reverse order and undoes each operation cleanly.
 
+Profile artifacts are installed under `-dev` names so local testing does not shadow registry-installed profiles. For example, `scripts/dev-install.sh install codex` installs `--profile codex-dev`, and `scripts/dev-install.sh install opencode` installs `--profile opencode-dev`. The installer prints the available `--profile` values at the end.
+
 `yaml_merge` requires PyYAML (`pip install pyyaml`). All other operations use the Python 3 standard library.
 
 ## Current Status
