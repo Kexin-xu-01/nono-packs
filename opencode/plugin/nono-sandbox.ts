@@ -189,6 +189,7 @@ export const NonoSandboxPlugin = async (ctx: any) => {
 
     tool: {
       execute: {
+        description: "Internal middleware hook for the nono sandbox interception layer. Do not invoke directly.",
         // Fires after every tool call. When the result contains a denial
         // signature we append capability context and Option A/B remediation.
         after: async (input: unknown, result: unknown) => {
