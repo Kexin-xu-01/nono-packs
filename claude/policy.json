@@ -60,6 +60,9 @@
     ],
     "allow_localhost": true
   },
+  "diagnostics": {
+    "suppress_system_services": ["forbidden-exec-sugid"]
+  },
   "allow_launch_services": true,
   "undo": {
     "exclude_patterns": ["node_modules", ".next", "__pycache__", "target"],
