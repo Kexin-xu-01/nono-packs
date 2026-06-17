@@ -1,7 +1,7 @@
-name: Publish claude pack
+name: Publish antigravity pack
 on:
   push:
-    tags: ["claude-v*"]
+    tags: ["antigravity-v*"]
   workflow_dispatch:
 
 # Inlined (rather than calling a reusable _publish.yml) so the OIDC
@@ -22,9 +22,9 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          VERSION=$(jq -r '.version' claude/package.json)
+          VERSION=$(jq -r '.version' antigravity/package.json)
           if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
-            echo "ERROR: claude/package.json is missing a 'version' field"
+            echo "ERROR: antigravity/package.json is missing a 'version' field"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -38,8 +38,8 @@ jobs:
           # `artifacts[].path` so the manifest is the source of truth.
           {
             echo "package.json"
-            [ -f "claude/README.md" ] && echo "README.md"
-            jq -r '.artifacts[].path' "claude/package.json"
+            [ -f "antigravity/README.md" ] && echo "README.md"
+            jq -r '.artifacts[].path' "antigravity/package.json"
           } | sort -u > /tmp/files.txt
           {
             echo "files<<EOF"
@@ -50,9 +50,9 @@ jobs:
       - uses: always-further/agent-sign@c9426f1a00f823dd53e7b9068d910a68b43e49e9 # v0.0.11
         with:
           publish: "true"
-          package-name: claude
+          package-name: antigravity
           package-namespace: always-further
           package-version: ${{ steps.version.outputs.version }}
-          package-path: claude
+          package-path: antigravity
           registry-url: https://registry.nono.sh/api/v1
           files: ${{ steps.files.outputs.files }}
