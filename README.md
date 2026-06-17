@@ -16,6 +16,7 @@ Each top-level directory is an individual pack. Packs are described by a `packag
 Current packs in this repository include:
 
 - [`claude`](./claude): Claude Code integration for working inside the `nono` sandbox
+- [`claude-autoresearch`](./claude-autoresearch): GPU-enabled profile and plugin for running [autoresearch](https://github.com/Kexin-xu-01/autoresearch-nono) autonomous ML loops inside the `nono` sandbox — A100/CUDA workloads with kernel-level enforcement inherited by training subprocesses
 - [`codex`](./codex): Codex integration for working inside the `nono` sandbox
 - [`pi`](./pi): Pi Coding Agent package and profile for working inside the `nono` sandbox
 
@@ -98,4 +99,4 @@ Profile artifacts are installed under `-dev` names so local testing does not sha
 
 ## Current Status
 
-This repository is intended to host multiple packs, packages, and skills for the wider `nono` registry. The [`claude`](./claude) pack is the initial example and documents the expected structure for future additions.
+This repository is intended to host multiple packs, packages, and skills for the wider `nono` registry. The [`claude`](./claude) pack is the initial example and documents the expected structure for future additions. The [`claude-autoresearch`](./claude-autoresearch) pack extends it with GPU access and ML-specific filesystem grants for overnight autonomous research runs — see [Kexin-xu-01/autoresearch-nono](https://github.com/Kexin-xu-01/autoresearch-nono) for the full workload setup.
