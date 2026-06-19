@@ -48,7 +48,7 @@
     {
       "type": "write_file",
       "source": "wiring/profile-drafts-dir-marker",
-      "dest": "$HOME/.config/nono/profile-drafts/.nono-opencode-pack-marker"
+      "dest": "$NONO_CONFIG/profile-drafts/.nono-opencode-pack-marker"
     },
     {
       "type": "symlink",

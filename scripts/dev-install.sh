@@ -71,7 +71,10 @@ PACK_DIR="$REPO_ROOT/$PACK"
 [[ -d "$PACK_DIR" ]]              || { echo "error: pack directory not found: $PACK_DIR" >&2; exit 1; }
 [[ -f "$PACK_DIR/package.json" ]] || { echo "error: missing $PACK/package.json" >&2; exit 1; }
 
-NONO_PROFILES_DIR="$HOME/.config/nono/profiles"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+NONO_CONFIG="$XDG_CONFIG_HOME/nono"
+NONO_PACKAGES="$NONO_CONFIG/packages"
+NONO_PROFILES_DIR="$NONO_CONFIG/profiles"
 
 NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -80,6 +83,9 @@ NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 expand_vars() {
   local s="$1"
   s="${s//\$HOME/$HOME}"
+  s="${s//\$XDG_CONFIG_HOME/$XDG_CONFIG_HOME}"
+  s="${s//\$NONO_CONFIG/$NONO_CONFIG}"
+  s="${s//\$NONO_PACKAGES/$NONO_PACKAGES}"
   s="${s//\$PACK_DIR/$PACK_DIR}"
   s="${s//\$NS/$NS}"
   s="${s//\$NOW/$NOW}"

@@ -23,7 +23,7 @@
     {
       "type": "write_file",
       "source": "wiring/profile-drafts-dir-marker",
-      "dest": "$HOME/.config/nono/profile-drafts/.nono-codex-pack-marker"
+      "dest": "$NONO_CONFIG/profile-drafts/.nono-codex-pack-marker"
     },
     {
       "type": "symlink",

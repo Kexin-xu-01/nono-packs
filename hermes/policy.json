@@ -26,15 +26,15 @@
   "filesystem": {
     "allow": [
       "$HOME/.hermes",
-      "$HOME/.config/nono/profile-drafts"
+      "$NONO_CONFIG/profile-drafts"
     ],
     "read": [
       "$HOME/.local/bin",
       "$HOME/.local/share/uv",
-      "$HOME/.config/nono/packages"
+      "$NONO_PACKAGES"
     ],
     "suppress_save_prompt": [
-      "~/.config/nono/packages/always-further/hermes/plugin/nono-sandbox"
+      "$NONO_PACKAGES/always-further/hermes/plugin/nono-sandbox"
     ]
   },
   "network": {

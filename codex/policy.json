@@ -28,11 +28,11 @@
     "allow": [
       "$HOME/.codex",
       "$HOME/.agents",
-      "$HOME/.config/nono/profile-drafts"
+      "$NONO_CONFIG/profile-drafts"
     ],
     "read": [
-      "$HOME/.config/nono/packages",
-      "$HOME/.config/nono/profiles"
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
     ]
   },
   "network": { "block": false },

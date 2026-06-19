@@ -26,16 +26,16 @@
   "filesystem": {
     "allow": [
       "$HOME/.pi",
-      "$HOME/.config/nono/profile-drafts"
+      "$NONO_CONFIG/profile-drafts"
     ],
     "read": [
       "$HOME/.nvm/",
       "$HOME/.agents/skills",
-      "$HOME/.config/nono/packages",
-      "$HOME/.config/nono/profiles"
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
     ],
     "suppress_save_prompt": [
-      "~/.config/nono/packages/always-further/pi"
+      "$NONO_PACKAGES/always-further/pi"
     ]
   },
     "network": {

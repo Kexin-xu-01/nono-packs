@@ -71,7 +71,7 @@
     {
       "type": "write_file",
       "source": "wiring/profile-drafts-dir-marker",
-      "dest": "$HOME/.config/nono/profile-drafts/.nono-claude-pack-marker"
+      "dest": "$NONO_CONFIG/profile-drafts/.nono-claude-pack-marker"
     },
     {
       "type": "symlink",

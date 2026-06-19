@@ -25,12 +25,12 @@
       "$HOME/.openclaw-agent2",
       "$HOME/.openclaw-agent3",
       "$HOME/.config/openclaw",
-      "$HOME/.config/nono/profile-drafts",
+      "$NONO_CONFIG/profile-drafts",
       "$TMPDIR/openclaw-$UID"
     ],
     "read": [
-      "$HOME/.config/nono/packages",
-      "$HOME/.config/nono/profiles"
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
     ],
     "allow_file": [
       "$HOME/.openclaw.json"

@@ -27,7 +27,7 @@
     {
       "type": "write_file",
       "source": "wiring/profile-drafts-dir-marker",
-      "dest": "$HOME/.config/nono/profile-drafts/.nono-pi-pack-marker"
+      "dest": "$NONO_CONFIG/profile-drafts/.nono-pi-pack-marker"
     },
     {
       "type": "json_array_append",

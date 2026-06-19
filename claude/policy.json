@@ -32,13 +32,13 @@
       "$HOME/.claude",
       "$HOME/.local/state/claude/locks",
       "$HOME/.cache/claude",
-      "$HOME/.config/nono/profile-drafts",
+      "$NONO_CONFIG/profile-drafts",
       "/tmp/claude-$UID",
       { "path": "$HOME/Library/Keychains", "when": "macos" }
     ],
     "read": [
-      "$HOME/.config/nono/packages",
-      "$HOME/.config/nono/profiles"
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
     ],
     "allow_file": [
       "$HOME/.claude.json",
