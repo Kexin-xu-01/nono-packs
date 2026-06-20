@@ -2,21 +2,20 @@
   "schema_version": 1,
   "name": "codex",
   "version": "0.0.12",
-  "description": "OpenAI Codex CLI plugin and matching nono profile. Provides sandbox-aware diagnostics on permission failures via Codex's hook system.",
+  "description": "OpenAI Codex CLI plugin and matching nono profile. Teaches Codex how to handle nono sandbox permission failures without noisy hook output.",
   "license": "Apache-2.0",
   "platforms": ["macos", "linux"],
   "min_nono_version": "0.44.0",
   "artifacts": [
     { "type": "profile", "path": "policy.json", "install_as": "codex" },
     { "type": "plugin", "path": ".codex-plugin/plugin.json" },
+    { "type": "plugin", "path": "bin/nono-draft-profile" },
     { "type": "plugin", "path": "bin/nono-hook.sh" },
     { "type": "plugin", "path": "bin/nono-hook-session.sh" },
     { "type": "plugin", "path": "skills/nono-sandbox/SKILL.md" },
     { "type": "plugin", "path": "assets/logo.png" },
     { "type": "plugin", "path": "wiring/marketplace.json" },
     { "type": "plugin", "path": "wiring/codex-block.toml" },
-    { "type": "plugin", "path": "wiring/hooks-entries.json" },
-    { "type": "plugin", "path": "wiring/session-entries.json" },
     { "type": "plugin", "path": "wiring/profile-drafts-dir-marker" }
   ],
   "wiring": [
@@ -24,6 +23,11 @@
       "type": "write_file",
       "source": "wiring/profile-drafts-dir-marker",
       "dest": "$NONO_CONFIG/profile-drafts/.nono-codex-pack-marker"
+    },
+    {
+      "type": "write_file",
+      "source": "bin/nono-draft-profile",
+      "dest": "$HOME/.codex/bin/nono-draft-profile"
     },
     {
       "type": "symlink",
@@ -44,21 +48,8 @@
       "type": "toml_block",
       "file": "$HOME/.codex/config.toml",
       "marker_id": "always-further-codex",
-      "content": "wiring/codex-block.toml"
-    },
-    {
-      "type": "json_array_append",
-      "file": "$HOME/.codex/hooks.json",
-      "path": "hooks.PostToolUse",
-      "patch_entries": "wiring/hooks-entries.json",
-      "key_field": "hooks.0.command"
-    },
-    {
-      "type": "json_array_append",
-      "file": "$HOME/.codex/hooks.json",
-      "path": "hooks.SessionStart",
-      "patch_entries": "wiring/session-entries.json",
-      "key_field": "hooks.0.command"
+      "content": "wiring/codex-block.toml",
+      "position": "top"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "nono",
   "version": "1.0.0",
-  "description": "Teaches OpenAI Codex how to work inside a nono security sandbox. Provides sandbox-aware diagnostics on permission failures via PostToolUse and SessionStart hooks.",
+  "description": "Teaches OpenAI Codex how to work inside a nono security sandbox without noisy hook output.",
   "author": {
     "name": "Always Further",
     "url": "https://github.com/always-further"

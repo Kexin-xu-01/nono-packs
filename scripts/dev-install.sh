@@ -361,13 +361,14 @@ maybe_wrap_local_shell_scripts() {
 
 py_toml_block_apply() {
   # Remove any existing marked block, then append the new one.
-  local target_file="$1" marker_id="$2" block_content="$3"
-  python3 - "$target_file" "$marker_id" "$block_content" <<'PYEOF'
+  local target_file="$1" marker_id="$2" block_content="$3" position="${4:-bottom}"
+  python3 - "$target_file" "$marker_id" "$block_content" "$position" <<'PYEOF'
 import sys
 
 target_path   = sys.argv[1]
 marker_id     = sys.argv[2]
 block_content = sys.argv[3]
+position      = sys.argv[4]
 
 begin_marker = f'# BEGIN nono-pack:{marker_id}'
 end_marker   = f'# END nono-pack:{marker_id}'
@@ -391,17 +392,21 @@ for line in lines:
     if not skip:
         out.append(line)
 
-# Strip trailing blank lines
-while out and not out[-1].strip():
-    out.pop()
-
-# Append new block
-if out:
-    out.append('\n')
-out.append(f'{begin_marker}\n')
+block = [f'{begin_marker}\n']
 for bline in block_content.splitlines():
-    out.append(f'{bline}\n')
-out.append(f'{end_marker}\n')
+    block.append(f'{bline}\n')
+block.append(f'{end_marker}\n')
+
+if position == "top":
+    while out and not out[0].strip():
+        out.pop(0)
+    out = block + (['\n'] if out else []) + out
+else:
+    while out and not out[-1].strip():
+        out.pop()
+    if out:
+        out.append('\n')
+    out.extend(block)
 
 import os
 os.makedirs(os.path.dirname(target_path) or '.', exist_ok=True)
@@ -530,10 +535,10 @@ py_write_dev_profile() {
   # another profile artifact in the same pack are rewritten to that artifact's
   # dev name, so multi-profile packs stay self-contained in local installs.
   local src_path="$1" dest_path="$2" dev_name="$3" pkg_file="$4"
-  python3 - "$src_path" "$dest_path" "$dev_name" "$pkg_file" "$PROFILE_SUFFIX" <<'PYEOF'
+  python3 - "$src_path" "$dest_path" "$dev_name" "$pkg_file" "$PROFILE_SUFFIX" "$PACK_DIR" <<'PYEOF'
 import json, os, sys
 
-src_path, dest_path, dev_name, pkg_file, suffix = sys.argv[1:]
+src_path, dest_path, dev_name, pkg_file, suffix, pack_dir = sys.argv[1:]
 
 with open(src_path) as f:
     profile = json.load(f)
@@ -563,6 +568,14 @@ if isinstance(meta, dict):
     meta["name"] = dev_name
 else:
     profile["meta"] = {"name": dev_name}
+
+# Dev installs wire agent plugins through symlinks back to this checkout.
+# Sandbox profiles must grant the resolved target as well as ~/.codex,
+# otherwise Codex can see the plugin entry but cannot read SKILL.md.
+filesystem = profile.setdefault("filesystem", {})
+read_entries = filesystem.setdefault("read", [])
+if isinstance(read_entries, list) and pack_dir not in read_entries:
+    read_entries.append(pack_dir)
 
 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 with open(dest_path, "w") as f:
@@ -698,16 +711,18 @@ undo_json_array_append() {
 
 do_toml_block() {
   local entry="$1"
-  local file marker_id content_rel content_path block_content
+  local file marker_id content_rel content_path block_content position
   file="$(jfield_expand "$entry" "file")"
   marker_id="$(jfield "$entry" "marker_id")"
   content_rel="$(jfield "$entry" "content")"
+  position="$(jfield "$entry" "position")"
+  [[ -n "$position" ]] || position="bottom"
   content_path="$PACK_DIR/$content_rel"
   block_content="$(read_and_expand "$content_path")"
-  log "toml_block  $content_rel -> $file (marker: $marker_id)"
+  log "toml_block  $content_rel -> $file (marker: $marker_id, position: $position)"
   if (( ! DRY_RUN )); then
     mkdir -p "$(dirname "$file")"
-    py_toml_block_apply "$file" "$marker_id" "$block_content"
+    py_toml_block_apply "$file" "$marker_id" "$block_content" "$position"
   fi
 }
 
