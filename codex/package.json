@@ -2,7 +2,7 @@
   "schema_version": 1,
   "name": "codex",
   "version": "0.0.12",
-  "description": "OpenAI Codex CLI plugin and matching nono profile. Teaches Codex how to handle nono sandbox permission failures without noisy hook output.",
+  "description": "Teaches OpenAI Codex how to work inside a nono security sandbox.",
   "license": "Apache-2.0",
   "platforms": ["macos", "linux"],
   "min_nono_version": "0.44.0",
